@@ -1,0 +1,7 @@
+export(rlips.init,
+	   rlips.dispose,
+	   rlips.add,
+	   rlips.rotate,
+	   rlips.solve,
+	   rlips.get.data,
+	   rlips.test)

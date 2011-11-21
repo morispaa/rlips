@@ -1,0 +1,8 @@
+ocllips - R Linear Inverse Problem Solver written in OpenCL
+(c) 2011, University of Oulu
+Written by Mikko Orispää <mikko.orispaa@oulu.fi>
+
+Licensed under freeBSD license. See file LICENSE for details.
+
+This is OpenCL version of the rflips package. Givens rotations are done
+in parallel using OpenCL. 
