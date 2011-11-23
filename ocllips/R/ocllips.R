@@ -25,7 +25,7 @@ rlips.init <- function(ncols,nrhs,type='d',nbuf=100,workgroup.size=64)
 
   if (workgroup.size%%16 != 0)
   {
-    cat("Warning! Workgroup size REALLY should be multiple of 16, but whatever...")
+    cat("Warning! Workgroup size REALLY should be multiple of 16, but whatever...\n")
   }
   e$wg.size <- workgroup.size
 	
@@ -96,9 +96,10 @@ rlips.dispose <- function(e)
 
 
 ## Add data 
-rlips.add <- function(e,A.data,M.data,E.data)
+rlips.add <- function(e,A.data,M.data,E.data=1)
 {
   
+  ttt <- proc.time()
   # Make sure that we are using an active environment
   if (!e$active)
   {
@@ -136,9 +137,12 @@ rlips.add <- function(e,A.data,M.data,E.data)
 	if (all(E.dim == c(1,1)))
 	{
 		# Single scalar error variance
-		err <- 1/sqrt(as.vector(E.data))
-		A.data <- as.vector(err) * A.data
-		M.data <- as.vector(err) * M.data
+		if (E.data != 1)
+		{
+			err <- 1/sqrt(as.vector(E.data))
+			A.data <- as.vector(err) * A.data
+			M.data <- as.vector(err) * M.data
+		}
 	}
 	else if (all(E.dim == c(data.rows,1)))
 	{
@@ -159,10 +163,11 @@ rlips.add <- function(e,A.data,M.data,E.data)
 	{
 		stop('Error in rlips.add: E.data has wrong size!')
 	}
-		
+	
+	cat("rotation init: ",proc.time()-ttt,"\n")	
     
 
-  
+  ttt<-proc.time()
   #Join A and M and insert in buffer
   buffer <- matrix(0,data.rows,e$buffer.cols)
   buffer[,1:e$ncols] <- A.data
@@ -180,22 +185,34 @@ rlips.add <- function(e,A.data,M.data,E.data)
   
   e$brows <- e$brows + data.rows
   
+  cat("rotation joining: ",proc.time()-ttt,"\n")
 
-  
+  ttt<-proc.time()
   # Make rotations if necessary
-  while (e$brows >= e$nbuf)
+  loops <- floor(e$brows/e$nbuf)
+  #cat("loops: ",loops,"\n")
+  #if (loops > 0)
+  #{
+  for (q in 1:loops)
+  #while (e$brows >= e$nbuf)
   {
   	data <- matrix(t(e$buffer[1:e$nbuf,]),e$nbuf*e$buffer.cols)
   	
     ## rotate first nbuf rows
-    .C("sRotateOcllips",
+    tt<-system.time(.C("sRotateOcllips",
     	as.integer(e$ref),
-    	as.single(data),
-    	as.integer(e$nbuf))
+    	as.double(data),
+    	as.integer(e$nbuf)))
+    	
+    cat("Rotation:\n",tt,"\n")
     
+    qqq<-proc.time()
     e$buffer <- e$buffer[-(1:e$nbuf),]
+    cat("buffer manipulation: ",proc.time()-qqq,"\n")
     e$brows <- e$brows - e$nbuf
   }
+  #}
+  cat("rotation loop: ",proc.time()-ttt,"\n")
   
   # Update internal parameters
   e$nrows <- e$nrows + data.rows
@@ -218,7 +235,7 @@ rlips.rotate <- function(e)
     ## rotate first nbuf rows
     .C("sRotateOcllips",
     	as.integer(e$ref),
-    	as.single(data),
+    	as.double(data),
     	as.integer(e$brows))
     
     e$buffer <- 0
@@ -254,12 +271,14 @@ rlips.get.data <- function(e)
 {
 	if (e$brows > 0) rlips.rotate(e)
 	
-	res <- .C("sGetDataOcllips",
+	tt<-system.time(res <- .C("sGetDataOcllips",
 			as.integer(e$ref),
-			data = single(e$ncols * e$buffer.cols),
-			data.rows = integer(1))
-			
-			data.mat <- matrix(as.double(res$data),e$ncols,e$buffer.cols,byrow=TRUE)
+			data = double(e$ncols * e$buffer.cols),
+			data.rows = integer(1)))
+	
+	cat("Get data\n",tt,"\n")
+	
+	data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)
 			
 	e$R.mat <- data.mat[,1:e$ncols]
 	e$Y.mat <- data.mat[,(e$ncols+1):(e$ncols+e$nrhs)]
@@ -292,9 +311,9 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=64)
 	{
 	  for (i in 1:n)
 	  {
-	  	tt <- system.time(ss<-rlips.problem(type,A,m,buffersizes[i],wg.size))
-	  	times[i] <- times[i] + tt[3]
-	  	acc[i] <- acc[i] + max(abs(sol - ss))
+	  	ss<-rlips.problem(type,A,m,buffersizes[i],wg.size)
+	  	times[i] <- times[i] + ss$time[3]
+	  	acc[i] <- acc[i] + max(abs(sol - ss$sol))
 
 			
 	  }
@@ -311,13 +330,14 @@ rlips.problem <- function(type,A,m,bsize,wg.size)
 {
 	ncols <- ncol(A)
 	h<-rlips.init(ncols,1,type,bsize,wg.size)
-	rlips.add(h,A,m,1)
-	rlips.solve(h)
+	t1 <- system.time(rlips.add(h,A,m,1))
+	t2<-system.time(rlips.solve(h))
+	cat("t1:",t1," t2:",t2,"\n")
 	aa <- h$solution
 	rlips.dispose(h)
 	#cat(' init:',t1,"\n",sep=" ")
 	#cat('  add:',t2,"\n",sep=" ")
 	#cat('solve:',t3,"\n",sep=" ")
-	return(aa)	
+	return(list(sol=aa,time=t1+t2))	
 }
 

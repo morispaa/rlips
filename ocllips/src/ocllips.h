@@ -80,8 +80,8 @@ typedef struct _socllips
 // ***************************************
 void sInitOcllips(int*, int*, int*, int*, int*);
 void sKillOcllips(int*);
-void sRotateOcllips(int*, float*, int*);
-void sGetDataOcllips(int*, float*, int*);
+void sRotateOcllips(int*, double*, int*);
+void sGetDataOcllips(int*, double*, int*);
 
 
 
