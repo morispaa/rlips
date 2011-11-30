@@ -89,7 +89,7 @@ const char *sKernelSource = "\n" \
 "			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "	}	\n" \
-"	barrier(CLK_GLOBAL_MEM_FENCE);\n" \
+"	//barrier(CLK_GLOBAL_MEM_FENCE);\n" \
 "}\n" \
 "\n" \
 "\n" \
@@ -168,7 +168,7 @@ const char *sKernelSource = "\n" \
 "		}\n" \
 "	}\n" \
 "	\n" \
-"	barrier(CLK_GLOBAL_MEM_FENCE);\n" \
+"	//barrier(CLK_GLOBAL_MEM_FENCE);\n" \
 "	\n" \
 "\n" \
 "	\n" \

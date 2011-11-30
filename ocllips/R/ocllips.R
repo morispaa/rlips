@@ -99,7 +99,7 @@ rlips.dispose <- function(e)
 rlips.add <- function(e,A.data,M.data,E.data=1)
 {
   
-  ttt <- proc.time()
+  #ttt <- proc.time()
   # Make sure that we are using an active environment
   if (!e$active)
   {
@@ -164,10 +164,10 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		stop('Error in rlips.add: E.data has wrong size!')
 	}
 	
-	cat("rotation init: ",proc.time()-ttt,"\n")	
+	#cat("rotation init: ",proc.time()-ttt,"\n")	
     
 
-  ttt<-proc.time()
+  #ttt<-proc.time()
   #Join A and M and insert in buffer
   buffer <- matrix(0,data.rows,e$buffer.cols)
   buffer[,1:e$ncols] <- A.data
@@ -185,9 +185,9 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
   
   e$brows <- e$brows + data.rows
   
-  cat("rotation joining: ",proc.time()-ttt,"\n")
+  #cat("rotation joining: ",proc.time()-ttt,"\n")
 
-  ttt<-proc.time()
+  #ttt<-proc.time()
   # Make rotations if necessary
   loops <- floor(e$brows/e$nbuf)
   #cat("loops: ",loops,"\n")
@@ -196,23 +196,28 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
   for (q in 1:loops)
   #while (e$brows >= e$nbuf)
   {
-  	data <- matrix(t(e$buffer[1:e$nbuf,]),e$nbuf*e$buffer.cols)
+  	#q<-1
+  	start.row <- (q-1) * e$nbuf + 1
+  	end.row <- q * e$nbuf
+  	#qqq<-proc.time()
+  	data <- matrix(t(e$buffer[start.row:end.row,]),e$nbuf*e$buffer.cols)
+  	#cat("buffer manipulation: ",proc.time()-qqq,"\n")
   	
     ## rotate first nbuf rows
-    tt<-system.time(.C("sRotateOcllips",
+    .C("sRotateOcllips",
     	as.integer(e$ref),
     	as.double(data),
-    	as.integer(e$nbuf)))
+    	as.integer(e$nbuf))
     	
-    cat("Rotation:\n",tt,"\n")
+    #cat("Rotation:\n",tt,"\n")
     
-    qqq<-proc.time()
-    e$buffer <- e$buffer[-(1:e$nbuf),]
-    cat("buffer manipulation: ",proc.time()-qqq,"\n")
+    #qqq<-proc.time()
+    #e$buffer <- e$buffer[-(1:e$nbuf),]
+    #cat("buffer manipulation: ",proc.time()-qqq,"\n")
     e$brows <- e$brows - e$nbuf
-  }
   #}
-  cat("rotation loop: ",proc.time()-ttt,"\n")
+  }
+  #cat("rotation loop: ",proc.time()-ttt,"\n")
   
   # Update internal parameters
   e$nrows <- e$nrows + data.rows
@@ -271,18 +276,18 @@ rlips.get.data <- function(e)
 {
 	if (e$brows > 0) rlips.rotate(e)
 	
-	tt<-system.time(res <- .C("sGetDataOcllips",
+	res <- .C("sGetDataOcllips",
 			as.integer(e$ref),
 			data = double(e$ncols * e$buffer.cols),
-			data.rows = integer(1)))
+			data.rows = integer(1))
 	
-	cat("Get data\n",tt,"\n")
-	
+	#tt<-proc.time()
 	data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)
 			
 	e$R.mat <- data.mat[,1:e$ncols]
 	e$Y.mat <- data.mat[,(e$ncols+1):(e$ncols+e$nrhs)]
 	e$ddd.rows <- res$data.rows
+	#cat("Matrix manipulation: ",proc.time()-tt,"\n")
 	
 
 
@@ -290,7 +295,7 @@ rlips.get.data <- function(e)
 ## 
 
 
-rlips.test <- function(type,size,buffersizes,loop=1,wg.size=64)
+rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128)
 {
   ncols <- size[2]
 	rows <- size[1]
@@ -305,7 +310,7 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=64)
 	n<-length(buffersizes)
 	acc <- rep(0,n)
 	times <- rep(0,n)
-  flops <- 2 * ncols**3 + 3 * ncols**2 - 5 * ncols + 6 * (rows - ncols) * ncols + 3 * (rows - ncols) * ncols * (ncols + 1)
+  	flops <- 2 * ncols**3 + 3 * ncols**2 - 5 * ncols + 6 * (rows - ncols) * ncols + 3 * (rows - ncols) * ncols * (ncols + 1)
 	
 	for(k in 1:loop)
 	{
@@ -330,14 +335,16 @@ rlips.problem <- function(type,A,m,bsize,wg.size)
 {
 	ncols <- ncol(A)
 	h<-rlips.init(ncols,1,type,bsize,wg.size)
-	t1 <- system.time(rlips.add(h,A,m,1))
-	t2<-system.time(rlips.solve(h))
-	cat("t1:",t1," t2:",t2,"\n")
+	tt <- proc.time()
+	rlips.add(h,A,m,1)
+	rlips.solve(h)
+	tt2<-proc.time()
+	#cat("LIPS time:",tt2-tt,"\n")
 	aa <- h$solution
 	rlips.dispose(h)
 	#cat(' init:',t1,"\n",sep=" ")
 	#cat('  add:',t2,"\n",sep=" ")
 	#cat('solve:',t3,"\n",sep=" ")
-	return(list(sol=aa,time=t1+t2))	
+	return(list(sol=aa,time=tt2-tt))	
 }
 

@@ -170,7 +170,7 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	// Create OpenCL buffers
 	K->dRmat = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeRmat,NULL,&error);
-	K->dBufferMat = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeBufferMat,NULL,&error2);
+	//K->dBufferMat = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeBufferMat,NULL,&error2);
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
 		printf("Could not create OpenCL data buffers! Exiting sInitOcllips.\n");
@@ -181,6 +181,12 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 		if (*K->context) clReleaseContext(*K->context);
 		exit(1);		
 	}	
+	
+	// Print info on max. workgroup size
+	//size_t maxsize;
+	//error = clGetKernelWorkGroupInfo(*K->partRotKernel, *K->device_id, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+    //                                                  sizeof(size_t), &maxsize, NULL);
+    //printf("Preferred work group size is %ld\n",maxsize);                                                
 
 //	printf("Trying to create address\n");
 	
@@ -217,7 +223,7 @@ void sKillOcllips(int *ref)
 	if (*K->context) clReleaseContext(*K->context);	
 	
 	if (K->dRmat) clReleaseMemObject(K->dRmat);
-	if (K->dBufferMat) clReleaseMemObject(K->dBufferMat);
+	//if (K->dBufferMat) clReleaseMemObject(K->dBufferMat);
 	
 	free(K);
 	ref[0] = 0;
@@ -258,7 +264,7 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 		
 		
 		// Let's see if this does the trick...
-		float *dataBuffer;
+		float __attribute__ ((aligned (16))) * restrict dataBuffer;
 		dataBuffer = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
 		
 		for (i=0 ; i< *bufferRows * K->numRmatCols ; i++)
@@ -268,10 +274,12 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 		
 		
 		
-		
+		cl_int error2;
 		// Move data buffer into device
-		error = clEnqueueWriteBuffer(*K->commandqueue,K->dBufferMat,CL_TRUE,0,
-					sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer,0,NULL,NULL);
+		//error = clEnqueueWriteBuffer(*K->commandqueue,K->dBufferMat,CL_FALSE,0,
+		//			sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer,0,NULL,NULL);
+		K->dBufferMat = clCreateBuffer(*K->context,CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer,&error2); 
+		
 					
 		// Are there any full rotations to be made?
 		if (K->numRmatRows > 0)
@@ -351,6 +359,10 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 		K->numRmatRows += *bufferRows;
 		if (K->numRmatRows > K->numCols) K->numRmatRows = K->numCols;
 		
+		free(dataBuffer);
+		clReleaseMemObject(K->dBufferMat);
+		
+		
 		
 	}
 }
@@ -369,7 +381,7 @@ void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
 	
 	cl_int error;
 	
-	float *dataBuffer;
+	float __attribute__ ((aligned (16))) * restrict dataBuffer;
 	dataBuffer = malloc(sizeof(float) * K->sizeRmat);
 	
 	// Read dRmat from device to dataBuffer

@@ -46,7 +46,7 @@
 	
 
 	}
-	clFinish(*K->commandqueue);
+	//clFinish(*K->commandqueue);
 
 	// Rotations done. Move Rotated dBuffer in dRmat
 	//printf("\trowsInR before bufferCopy: %d\n",rowsInR);
@@ -58,7 +58,7 @@
 		{
 			printf("Error in buffer copy! Error code %d.\n", err1);
 		}
-	clFinish(*K->commandqueue);
+	//clFinish(*K->commandqueue);
 	
 	// Update variables
 	//rowsInR += rowsToRotate;
