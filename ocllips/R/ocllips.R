@@ -6,7 +6,7 @@
 
 
 ## Init RLIPS object
-rlips.init <- function(ncols,nrhs,type='d',nbuf=100,workgroup.size=64) 
+rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64) 
 {
 	e <- new.env()
 	
@@ -31,7 +31,7 @@ rlips.init <- function(ncols,nrhs,type='d',nbuf=100,workgroup.size=64)
 	
   e$type <- type ## Other types not yet implemented
 	
-  if (type != 's')
+  if (type != 's' && type != 'c')
   {
     stop('Only single precission real type implemented! Exiting!')
   }
@@ -39,14 +39,24 @@ rlips.init <- function(ncols,nrhs,type='d',nbuf=100,workgroup.size=64)
 	e$nrows <- 0 # Number of total rows fed into system
 	e$brows <- 0 # Number of rows in the buffers
 	e$rrows <- 0 # Number of rows in R matrix
-  e$buffer.cols <- floor((ncols + nrhs + workgroup.size - 1)/workgroup.size) * workgroup.size # Number of columns in the buffer matrix. 
+    e$buffer.cols <- floor((ncols + nrhs + workgroup.size - 1)/workgroup.size) * workgroup.size # Number of columns in the buffer matrix. 
                                                                                               # Holds both data and measurements and is a multiple of 
                                                                                               # workgroup.size.
+    e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
 	
   # At this point, only single precision real is implemented.
 	if (e$type == 's')
 	{
 		e$ref <- .C("sInitOcllips",
+					aa=integer(2),
+					as.integer(ncols),
+					as.integer(nrhs),
+					as.integer(e$nbuf),
+          as.integer(e$wg.size))$aa
+	}
+	else if (type == 'c')
+	{
+		e$ref <- .C("cInitOcllips",
 					aa=integer(2),
 					as.integer(ncols),
 					as.integer(nrhs),
@@ -75,6 +85,11 @@ rlips.dispose <- function(e)
 		if (e$type == 's')
 		{
 			.C("sKillOcllips",
+				as.integer(e$ref))
+		}
+		else if (e$type == 'c')
+		{
+			.C("cKillOcllips",
 				as.integer(e$ref))
 		}
 		else
@@ -167,84 +182,128 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 	#cat("rotation init: ",proc.time()-ttt,"\n")	
     
 
-  #ttt<-proc.time()
-  #Join A and M and insert in buffer
-  buffer <- matrix(0,data.rows,e$buffer.cols)
-  buffer[,1:e$ncols] <- A.data
-  buffer[,(e$ncols+1):(e$ncols+e$nrhs)] <- M.data
-   
-  # Add new buffer rows to buffer
-  if (e$brows > 0)
-  {
-  e$buffer <- rbind(e$buffer,buffer)
-  }
-  else
-  {
-  	e$buffer <- buffer
-  }
-  
-  e$brows <- e$brows + data.rows
-  
-  #cat("rotation joining: ",proc.time()-ttt,"\n")
+ #  #ttt<-proc.time()
+#   #Join A and M and insert in buffer
+#   buffer <- matrix(0,data.rows,e$buffer.cols)
+#   buffer[,1:e$ncols] <- A.data
+#   buffer[,(e$ncols+1):(e$ncols+e$nrhs)] <- M.data
+#    
+#   # Add new buffer rows to buffer
+#   if (e$brows > 0)
+#   {
+#   e$buffer <- rbind(e$buffer,buffer)
+#   }
+#   else
+#   {
+#   	e$buffer <- buffer
+#   }
+#   
+#   e$brows <- e$brows + data.rows
+#   
+#   #cat("rotation joining: ",proc.time()-ttt,"\n")
 
-  #ttt<-proc.time()
-  # Make rotations if necessary
-  loops <- floor(e$brows/e$nbuf)
-  #cat("loops: ",loops,"\n")
-  #if (loops > 0)
-  #{
-  for (q in 1:loops)
-  #while (e$brows >= e$nbuf)
-  {
-  	#q<-1
-  	start.row <- (q-1) * e$nbuf + 1
-  	end.row <- q * e$nbuf
-  	#qqq<-proc.time()
-  	data <- matrix(t(e$buffer[start.row:end.row,]),e$nbuf*e$buffer.cols)
-  	#cat("buffer manipulation: ",proc.time()-qqq,"\n")
-  	
-    ## rotate first nbuf rows
-    .C("sRotateOcllips",
-    	as.integer(e$ref),
-    	as.double(data),
-    	as.integer(e$nbuf))
-    	
-    #cat("Rotation:\n",tt,"\n")
-    
-    #qqq<-proc.time()
-    #e$buffer <- e$buffer[-(1:e$nbuf),]
-    #cat("buffer manipulation: ",proc.time()-qqq,"\n")
-    e$brows <- e$brows - e$nbuf
-  #}
-  }
-  #cat("rotation loop: ",proc.time()-ttt,"\n")
-  
-  # Update internal parameters
-  e$nrows <- e$nrows + data.rows
-  e$rrows <- min(e$ncols,e$rrows + data.rows)
-  
+	# Move data to buffer
+	for (i in seq(data.rows))
+	{
+		e$buffer[e$brows+1,1:e$ncols] <- A.data[i,]
+		e$buffer[e$brows+1,(e$ncols+1):(e$ncols+e$nrhs)] <- M.data[i,]
+		
+		e$brows <- e$brows + 1
+		
+		# If buffer becomes full, rotate it
+		if (e$brows >= e$nbuf)
+		{
+			rlips.rotate(e)
+		}
+	}
+
+
+  # #ttt<-proc.time()
+#   # Make rotations if necessary
+#   loops <- floor(e$brows/e$nbuf)
+#   #cat("loops: ",loops,"\n")
+#   #if (loops > 0)
+#   #{
+#   for (q in 1:loops)
+#   #while (e$brows >= e$nbuf)
+#   {
+#   	#q<-1
+#   	start.row <- (q-1) * e$nbuf + 1
+#   	end.row <- q * e$nbuf
+#   	#qqq<-proc.time()
+#   	data <- matrix(t(e$buffer[start.row:end.row,]),e$nbuf*e$buffer.cols)
+#   	#cat("buffer manipulation: ",proc.time()-qqq,"\n")
+#   	
+#     ## rotate first nbuf rows
+#     if (e$type == 's')
+#     {
+#     	.C("sRotateOcllips",
+#     		as.integer(e$ref),
+#     		as.double(data),
+#     		as.integer(e$nbuf))
+#     }
+#     else if (e$type == 'c')
+#     {
+#     	.C("cRotateOcllips",
+#     		as.integer(e$ref),
+#     		as.double(Re(data)),
+#     		as.double(Im(data)),
+#     		as.integer(e$nbuf))
+#     }	
+#     #cat("Rotation:\n",tt,"\n")
+#     
+#     #qqq<-proc.time()
+#     #e$buffer <- e$buffer[-(1:e$nbuf),]
+#     #cat("buffer manipulation: ",proc.time()-qqq,"\n")
+#     e$brows <- e$brows - e$nbuf
+#   #}
+#   }
+#   #cat("rotation loop: ",proc.time()-ttt,"\n")
+#   
+#   e$buffer <- e$buffer[-(1:(e$nbuf*loops)),]
+#   
+#   # Update internal parameters
+#   e$nrows <- e$nrows + data.rows
+#   e$rrows <- min(e$ncols,e$rrows + data.rows)
+#   
 
 }
 
 ## Do the rotations
 rlips.rotate <- function(e)
 {
+	#cat("Going to rotate ",e$brows," buffer rows\n",sep="")
+
   if (e$brows > e$nbuf)
   {
     stop("Something fishy going on? Environment should not have this many buffer rows at this point! Doin' nuthin'!")
   }
 	if (e$brows > 0)
 	{
-	data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)
+		data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)
   	
-    ## rotate first nbuf rows
-    .C("sRotateOcllips",
-    	as.integer(e$ref),
-    	as.double(data),
-    	as.integer(e$brows))
-    
-    e$buffer <- 0
-    e$brows <- 0
+    	## rotate first nbuf rows
+    	if (e$type == 's')
+    	{
+    		.C("sRotateOcllips",
+    			as.integer(e$ref),
+    			as.double(data),
+    			as.integer(e$brows))
+    	}
+    	else if (e$type == 'c')
+    	{
+    		.C("cRotateOcllips",
+    			as.integer(e$ref),
+    			as.double(Re(data)),
+    			as.double(Im(data)),		
+    			as.integer(e$brows))
+    	}
+    	
+    	e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
+    	e$nrows <- e$nrows + e$browse.pkgs
+    	e$rrows <- min(e$ncols,e$nrows)
+    	e$brows <- 0
+    	
 	}
 
 
@@ -260,12 +319,27 @@ rlips.solve <- function(e,calculate.covariance=FALSE)
 	{
 		rlips.get.data(e)
     
-    e$solution <- backsolve(e$R.mat,e$Y.mat)
+    if (e$type == 's')
+    {
+    	e$solution <- backsolve(e$R.mat,e$Y.mat)
+    }
+    else if (e$type == 'c')
+    {
+    	e$solution <- solve(e$R.mat,e$Y.mat)
+    }
     
     if (calculate.covariance)
     {
-      e$covariance <- backsolve(e$R.mat,diaf(rep(1,e$ncols)))
-      e$covariance <- e$covariance %*% t(e$covariance)
+    	if (e$type == 's')
+    	{
+      		e$covariance <- backsolve(e$R.mat,diaf(rep(1,e$ncols)))
+      		e$covariance <- e$covariance %*% t(e$covariance)
+      	}
+      	else if (e$type == 'c')
+      	{
+      		e$covariance <- solve(e$R.mat,diaf(rep(1,e$ncols)))
+      		e$covariance <- e$covariance %*% t(e$covariance)
+      	}
     }
     
 	}
@@ -276,13 +350,27 @@ rlips.get.data <- function(e)
 {
 	if (e$brows > 0) rlips.rotate(e)
 	
-	res <- .C("sGetDataOcllips",
-			as.integer(e$ref),
-			data = double(e$ncols * e$buffer.cols),
-			data.rows = integer(1))
+	if (e$type == 's')
+	{
+		res <- .C("sGetDataOcllips",
+				as.integer(e$ref),
+				data = double(e$ncols * e$buffer.cols),
+				data.rows = integer(1))
+		#data <- res$data	
+		data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)	
+	}
+	else if (e$type == 'c')
+	{
+		res <- .C("cGetDataOcllips",
+				as.integer(e$ref),
+				data = double(e$ncols * e$buffer.cols),
+				data.i = double(e$ncols * e$buffer.cols),
+				data.rows = integer(1))
+		data.mat <- matrix(res$data + 1i*res$data.i,e$ncols,e$buffer.cols,byrow=TRUE)			
+	}
 	
 	#tt<-proc.time()
-	data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)
+	#data.mat <- matrix(data,e$ncols,e$buffer.cols,byrow=TRUE)
 			
 	e$R.mat <- data.mat[,1:e$ncols]
 	e$Y.mat <- data.mat[,(e$ncols+1):(e$ncols+e$nrhs)]
@@ -300,11 +388,17 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128)
   ncols <- size[2]
 	rows <- size[1]
 	A<-matrix(rnorm(ncols*rows),rows,ncols)
+	sol<-rnorm(ncols)
+	if (type == 'c')
+	{
+		A <- A + 1i*matrix(rnorm(ncols*rows),rows,ncols)
+		sol <- sol + 1i*rnorm(ncols)
+	}
 	#if (type=='c' || type=='z')
 	#{
 	#	A <- A + 1i*matrix(rnorm(ncols*rows),rows,ncols)
 	#}
-	sol<-rnorm(ncols)
+	
 	m<-A%*%sol
 	
 	n<-length(buffersizes)
