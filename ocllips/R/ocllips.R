@@ -39,10 +39,10 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64)
 	e$nrows <- 0 # Number of total rows fed into system
 	e$brows <- 0 # Number of rows in the buffers
 	e$rrows <- 0 # Number of rows in R matrix
-    #e$buffer.cols <- floor((ncols + nrhs + workgroup.size - 1)/workgroup.size) * workgroup.size # Number of columns in the buffer matrix. 
+    e$buffer.cols <- floor((ncols + nrhs + 32 - 1)/32) * 32 # Number of columns in the buffer matrix. 
                                                                                               # Holds both data and measurements and is a multiple of 
                                                                                               # workgroup.size.
-    e$buffer.cols <- ncols + nrhs                                                                                          
+    #e$buffer.cols <- ncols + nrhs                                                                                          
     e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
 	
   # At this point, only single precision real is implemented.

@@ -88,7 +88,7 @@ void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 	// Stages
 	int totalStages = rowsToRotate + numColumns - 1;
 	
-	printf("\tFull rotations, Total Stages: %d\n",totalStages);
+	//printf("\tFull rotations, Total Stages: %d\n",totalStages);
 	
 
 	// Loop through stages
@@ -104,7 +104,7 @@ void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 		firstRow = min(stage, rowsToRotate) - 1 + fRow;
 		firstCol = max(1, stage - (rowsToRotate - 1)) - 1 + fCol;
 		
-		printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d\n",stage,numRotations,firstRow,firstCol);
+		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d\n",stage,numRotations,firstRow,firstCol);
 		
 		// number of rotations/work-groups
 		size_t localSize = K->sizeWorkgroup;
@@ -232,7 +232,7 @@ void cPartialRotations(cOcllips  *K, int rowsToRotate, int numColumns, int fRow,
 	// Stages
 	int totalStages = 2 * rowsToRotate - 3;
 	
-	printf("\tPartial rotations, Total Stages: %d\n",totalStages);
+	//printf("\tPartial rotations, Total Stages: %d\n",totalStages);
 	
 
 	// Loop through stages
@@ -244,7 +244,7 @@ void cPartialRotations(cOcllips  *K, int rowsToRotate, int numColumns, int fRow,
 		int firstRow = min( stage + 1 , rowsToRotate ) - 1 + fRow;
 		int firstCol = max( stage - rowsToRotate + 2 , 1) - 1;
 		
-		printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d fCol: %d\n",stage,numRotations,firstRow,firstCol,fCol);
+		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d fCol: %d\n",stage,numRotations,firstRow,firstCol,fCol);
 		
 		// number of rotations/work-groups
 		size_t localSize = K->sizeWorkgroup;
@@ -284,8 +284,8 @@ void cPartialRotations(cOcllips  *K, int rowsToRotate, int numColumns, int fRow,
 	// Rotations done. Move Rotated dBuffer in dRmat
 	//printf("\trowsInR before bufferCopy: %d\n",rowsInR);
 	int dRmatOffset = K->numRmatRows * K->numRmatCols;
-	printf("\tRmatOffset: %d\n",dRmatOffset);
-	printf("\tElementsCopied: %d\n",rowsToRotate * K->numRmatCols);
+	//printf("\tRmatOffset: %d\n",dRmatOffset);
+	//printf("\tElementsCopied: %d\n",rowsToRotate * K->numRmatCols);
 	err1  = clEnqueueCopyBuffer(*K->commandqueue,K->dBufferMat_r,K->dRmat_r,0,dRmatOffset * sizeof(float),sizeof(float) * rowsToRotate * K->numRmatCols,0,NULL,NULL);
 	//clEnqueueBarrier(*K->commandqueue);
 	err1 |= clEnqueueCopyBuffer(*K->commandqueue,K->dBufferMat_i,K->dRmat_i,0,dRmatOffset * sizeof(float),sizeof(float) * rowsToRotate * K->numRmatCols,0,NULL,NULL);

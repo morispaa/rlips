@@ -37,7 +37,7 @@ const char *sKernelSource = "\n" \
 "		rotRow = firstRow - currentRotation;\n" \
 "		rotCol = firstCol + currentRotation;\n" \
 "		//firstBlock = rotCol / locSize;\n" \
-"		firstBlock = rotCol;\n" \
+"		firstBlock = rotCol / 16 * 16;\n" \
 "		//numBlocks = nCols / locSize - firstBlock;\n" \
 "		numBlocks = nCols - firstBlock;\n" \
 "		\n" \
@@ -74,22 +74,22 @@ const char *sKernelSource = "\n" \
 "	\n" \
 "	int curBlock;\n" \
 "	//for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
-"	for(curBlock = lid; curBlock < nCols; curBlock+=locSize)\n" \
+"	for(curBlock = rotCol / 32 * 32 + lid; curBlock < nCols; curBlock += locSize)\n" \
 "	{\n" \
-"		locR1 = Rmat[rotCol * nCols + (firstBlock + curBlock)];\n" \
-"		locR2 = BufferMat[rotRow * nCols + (firstBlock + curBlock)];\n" \
+"		locR1 = Rmat[rotCol * nCols + (curBlock)];\n" \
+"		locR2 = BufferMat[rotRow * nCols + (curBlock)];\n" \
 "				\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			Rmat[rotCol * nCols + (firstBlock + curBlock) ] = rotSin * locR2;\n" \
+"			Rmat[rotCol * nCols + (curBlock) ] = rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = -rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (curBlock)] = -rotSin * locR1;\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			Rmat[rotCol * nCols + (firstBlock + curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
+"			Rmat[rotCol * nCols + (curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + (firstBlock + curBlock) ] = rotCos * locR2 - rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (curBlock) ] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "	}	\n" \
 "	//barrier(CLK_GLOBAL_MEM_FENCE);\n" \
@@ -117,7 +117,7 @@ const char *sKernelSource = "\n" \
 "	{\n" \
 "		rotRow = firstRow - currentRotation;\n" \
 "		rotCol = firstCol + currentRotation;\n" \
-"		firstBlock = (rotCol + colOffset);\n" \
+"		firstBlock = (rotCol + colOffset) / 16 * 16;\n" \
 "		numBlocks = nCols - firstBlock;\n" \
 "		\n" \
 "	\n" \
@@ -152,22 +152,22 @@ const char *sKernelSource = "\n" \
 "	}\n" \
 "	\n" \
 "	int curBlock;\n" \
-"	for(curBlock = lid; curBlock < nCols; curBlock+=locSize)\n" \
+"	for(curBlock = (rotCol + colOffset) / 32 * 32 + lid; curBlock < nCols; curBlock+=locSize)\n" \
 "	{\n" \
-"		locR1 = BufferMat[rotCol * nCols + (firstBlock + curBlock)];\n" \
-"		locR2 = BufferMat[rotRow * nCols + (firstBlock + curBlock)];\n" \
+"		locR1 = BufferMat[rotCol * nCols + (curBlock)];\n" \
+"		locR2 = BufferMat[rotRow * nCols + (curBlock)];\n" \
 "\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + (firstBlock + curBlock)] = rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + (curBlock)] = rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = -rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (curBlock)] = -rotSin * locR1;\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + (firstBlock + curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + (curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = rotCos * locR2 - rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (curBlock)] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "	}\n" \
 "	\n" \
@@ -281,39 +281,39 @@ const char *cKernelSource = "// file: partialrot.cl\n" \
 "	}\n" \
 "	\n" \
 "	int curBlock;\n" \
-"	for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
+"	for(curBlock = rotCol / 32 * 32 + lid; curBlock < nCols; curBlock += locSize)\n" \
 "	{\n" \
 "		// Load data\n" \
-"		locR1_r = Rmat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR1_i = Rmat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2_r = BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2_i = BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
+"		locR1_r = Rmat_r[rotCol * nCols + curBlock];\n" \
+"		locR1_i = Rmat_i[rotCol * nCols + curBlock];\n" \
+"		locR2_r = BufferMat_r[rotRow * nCols + curBlock];\n" \
+"		locR2_i = BufferMat_i[rotRow * nCols + curBlock];\n" \
 "		\n" \
 "		//barrier(CLK_LOCAL_MEM_FENCE);\n" \
 "		\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			Rmat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
-"			Rmat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			Rmat_r[rotCol * nCols + curBlock] = cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			Rmat_i[rotCol * nCols + curBlock] = cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
 "		}\n" \
 "		else if (skiprot)\n" \
 "		{\n" \
-"			Rmat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
-"			Rmat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
+"			Rmat_r[rotCol * nCols + curBlock] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
+"			Rmat_i[rotCol * nCols + curBlock] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			Rmat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
-"			Rmat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			Rmat_r[rotCol * nCols + curBlock] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			Rmat_i[rotCol * nCols + curBlock] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
 "		}\n" \
 "	}\n" \
 "	\n" \
@@ -361,10 +361,10 @@ const char *cKernelSource = "// file: partialrot.cl\n" \
 "		numBlocks = nCols / locSize - firstBlock;\n" \
 "		\n" \
 "		float a_r, a_i, b_r, b_i, sqab, modA, modB, tmpA, tmpB;\n" \
-"		a_r = BufferMat_r[rotCol * nCols + rotCol];\n" \
-"		a_i = BufferMat_i[rotCol * nCols + rotCol];\n" \
-"		b_r = BufferMat_r[rotRow * nCols + rotCol];\n" \
-"		b_i = BufferMat_i[rotRow * nCols + rotCol];\n" \
+"		a_r = BufferMat_r[rotCol * nCols + rotCol + colOffset];\n" \
+"		a_i = BufferMat_i[rotCol * nCols + rotCol + colOffset];\n" \
+"		b_r = BufferMat_r[rotRow * nCols + rotCol + colOffset];\n" \
+"		b_i = BufferMat_i[rotRow * nCols + rotCol + colOffset];\n" \
 "\n" \
 "		tmpA = a_r*a_r + a_i*a_i;\n" \
 "		tmpB = b_r*b_r + b_i*b_i;\n" \
@@ -440,52 +440,52 @@ const char *cKernelSource = "// file: partialrot.cl\n" \
 "	}\n" \
 "	\n" \
 "	int curBlock;\n" \
-"	for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
+"	for(curBlock = (rotCol + colOffset) / 32 * 32 + lid; curBlock < nCols; curBlock += locSize)\n" \
 "	{\n" \
 "		// Load data\n" \
-"		locR1_r = BufferMat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR1_i = BufferMat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2_r = BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2_i = BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		//locR1 = BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		//locR2 = BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
+"		locR1_r = BufferMat_r[rotCol * nCols + curBlock];\n" \
+"		locR1_i = BufferMat_i[rotCol * nCols + curBlock];\n" \
+"		locR2_r = BufferMat_r[rotRow * nCols + curBlock];\n" \
+"		locR2_i = BufferMat_i[rotRow * nCols + curBlock];\n" \
+"		//locR1 = BufferMat[rotCol * nCols + curBlock];\n" \
+"		//locR2 = BufferMat[rotRow * nCols + curBlock];\n" \
 "		\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			BufferMat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
-"			BufferMat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			BufferMat_r[rotCol * nCols + curBlock] = cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			BufferMat_i[rotCol * nCols + curBlock] = cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
 "		}\n" \
 "		else if (skiprot)\n" \
 "		{\n" \
-"			BufferMat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
-"			BufferMat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
+"			BufferMat_r[rotCol * nCols + curBlock] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
+"			BufferMat_i[rotCol * nCols + curBlock] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i);\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			BufferMat_r[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
-"			BufferMat_i[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			BufferMat_r[rotCol * nCols + curBlock] = cmult_r(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_r(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
+"			BufferMat_i[rotCol * nCols + curBlock] = cmult_i(rotCos_r,rotCos_i,locR1_r,locR1_i) + cmult_i(rotSin_r,rotSin_i,locR2_r,locR2_i);\n" \
 "			\n" \
-"			BufferMat_r[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
-"			BufferMat_i[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_r[rotRow * nCols + curBlock] = cmult_r(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_r(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
+"			BufferMat_i[rotRow * nCols + curBlock] = cmult_i(rotCos_r,-rotCos_i,locR2_r,locR2_i) + cmult_i(-rotSin_r,rotSin_i,locR1_r,locR1_i);\n" \
 "		}\n" \
 "		/*		\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + curBlock] = rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = -rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + curBlock] = -rotSin * locR1;\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR1 + rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + curBlock] = rotCos * locR1 + rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR2 - rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + curBlock] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "		*/\n" \
 "	}\n" \

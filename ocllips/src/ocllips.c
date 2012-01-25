@@ -64,8 +64,8 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	// Column size of OpenCL buffers (smallest multiple of workgroup size that
 	// contains both theory matrix columns and measurements)
-	//K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
-	K->numRmatCols = *ncols + *nrhs;
+	K->numRmatCols = (*ncols + *nrhs + 32 - 1) / 32 * 32;
+	//K->numRmatCols = *ncols + *nrhs;
 	
 	// Numbers whose absolute value is smaller than zThreshold are 
 	// considered as zeroes
@@ -444,7 +444,8 @@ void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	// Column size of OpenCL buffers (smallest multiple of workgroup size that
 	// contains both theory matrix columns and measurements)
-	K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
+	//K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
+	K->numRmatCols = (*ncols + *nrhs + 32 - 1) / 32 * 32;
 	
 	// Numbers whose absolute value is smaller than zThreshold are 
 	// considered as zeroes
@@ -725,7 +726,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 				//#include "rot_full_c.inc"
 				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
-				clFinish(*K->commandqueue);
+				//clFinish(*K->commandqueue);
 				rowsToRotate = *bufferRows;
 				numColumns = *bufferRows;
 				fRow = 0;
