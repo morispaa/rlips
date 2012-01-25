@@ -383,7 +383,7 @@ rlips.get.data <- function(e)
 ## 
 
 
-rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128)
+rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128,return.data=FALSE)
 {
   ncols <- size[2]
 	rows <- size[1]
@@ -410,7 +410,7 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128)
 	{
 	  for (i in 1:n)
 	  {
-	  	ss<-rlips.problem(type,A,m,buffersizes[i],wg.size)
+	  	ss<-rlips.problem(type,A,m,buffersizes[i],wg.size,return.data)
 	  	times[i] <- times[i] + ss$time[3]
 	  	acc[i] <- acc[i] + max(abs(sol - ss$sol))
 
@@ -420,12 +420,19 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128)
   
 	times <- times/loop
 	acc <- acc/loop
-  Gflops <- flops/1.0E9 / times
+    Gflops <- flops/1.0E9 / times
 	
-	return(list(times=times,accuracy=acc,Gflops=Gflops))
+	if (return.data)
+	{
+		return(list(times=times,accuracy=acc,Gflops=Gflops,R=ss$R,Y=ss$Y))
+	}
+	else
+	{
+		return(list(times=times,accuracy=acc,Gflops=Gflops))
+	}
 }
 
-rlips.problem <- function(type,A,m,bsize,wg.size)
+rlips.problem <- function(type,A,m,bsize,wg.size,return.data)
 {
 	ncols <- ncol(A)
 	h<-rlips.init(ncols,1,type,bsize,wg.size)
@@ -435,10 +442,18 @@ rlips.problem <- function(type,A,m,bsize,wg.size)
 	tt2<-proc.time()
 	#cat("LIPS time:",tt2-tt,"\n")
 	aa <- h$solution
+	Rmat<-0
+	Ymat<-0
+	if(return.data)
+	{
+		rlips.get.data(h)
+		Rmat<-h$R.mat
+		Ymat<-h$Y.mat
+	}
 	rlips.dispose(h)
 	#cat(' init:',t1,"\n",sep=" ")
 	#cat('  add:',t2,"\n",sep=" ")
 	#cat('solve:',t3,"\n",sep=" ")
-	return(list(sol=aa,time=tt2-tt))	
+	return(list(sol=aa,time=tt2-tt,R=Rmat,Y=Ymat))	
 }
 

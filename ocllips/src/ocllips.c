@@ -23,6 +23,7 @@
 #endif
 
 #include "ocllips.h"
+#include "rotations.h"
 #include "kernelsources.h"
 
 
@@ -213,7 +214,7 @@ void sKillOcllips(int *ref)
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	sOcllips * restrict K;
+	sOcllips *K;
 	K = (sOcllips *)D.longValue;
 
 	if(*K->fullRotKernel) clReleaseKernel(*K->fullRotKernel);
@@ -241,7 +242,7 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	sOcllips * restrict K;
+	sOcllips *K;
 	K = (sOcllips *)D.longValue;
 	
 	// Check that the number of bufferRows does not exceed the device buffer size
@@ -264,7 +265,7 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 		
 		
 		// Let's see if this does the trick...
-		float __attribute__ ((aligned (16))) * restrict dataBuffer;
+		float __attribute__ ((aligned (32))) *dataBuffer;
 		dataBuffer = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
 		
 		for (i=0 ; i< *bufferRows * K->numRmatCols ; i++)
@@ -288,11 +289,13 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 			if (K->numRmatRows >= K->numCols)
 			{
 				rowsToRotate = *bufferRows;
-				numColumns = K->numRmatCols;
+				//numColumns = K->numRmatCols;
+				numColumns = K->numCols;
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full.inc"
+				//#include "rot_full.inc"
+				sFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 			
 			}
 			// else: will R matrix become full with this buffer?
@@ -308,21 +311,25 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full.inc"
+				//#include "rot_full.inc"
+				sFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				rowsToRotate = numRows1;
 				numColumns = numRows1;
 				fRow = 0;
 				fCol = K->numRmatRows;
 				
-				#include "rot_partial.inc"
+				//#include "rot_partial.inc"
+				sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				rowsToRotate = numRows2;
-				numColumns = K->numRmatCols;
+				//numColumns = K->numRmatCols;
+				numColumns = K->numCols;
 				fRow = numRows1;
 				fCol = 0;
 				
-				#include "rot_full.inc"
+				//#include "rot_full.inc"
+				sFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 			}
 			// else: first do normal full rotations and then partial rotations
@@ -333,14 +340,16 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full.inc"
+				//#include "rot_full.inc"
+				sFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				rowsToRotate = *bufferRows;
 				numColumns = *bufferRows;
 				fRow = 0;
 				fCol = K->numRmatRows;
 				
-				#include "rot_partial.inc"
+				//#include "rot_partial.inc"
+				sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 			
 			}
 		}
@@ -352,7 +361,8 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 			fRow = 0;
 			fCol = K->numRmatRows;
 			
-			#include "rot_partial.inc"
+			//#include "rot_partial.inc"
+			sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 		
 		}
 		
@@ -378,12 +388,12 @@ void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	sOcllips * restrict K;
+	sOcllips *K;
 	K = (sOcllips *)D.longValue;
 	
 	cl_int error;
 	
-	float __attribute__ ((aligned (16))) * restrict dataBuffer;
+	float __attribute__ ((aligned (32))) *dataBuffer;
 	dataBuffer = malloc(sizeof(float) * K->sizeRmat);
 	
 	// Read dRmat from device to dataBuffer
@@ -411,7 +421,7 @@ void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
 
 void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 {
-	cOcllips * restrict K;
+	cOcllips *K;
 	
 	// Allocate new sOcllips struct
 	K = (cOcllips *)malloc(sizeof(cOcllips));
@@ -583,7 +593,7 @@ void cKillOcllips(int *ref)
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	cOcllips * restrict K;
+	cOcllips *K;
 	K = (cOcllips *)D.longValue;
 
 	if(*K->fullRotKernel) clReleaseKernel(*K->fullRotKernel);
@@ -611,7 +621,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	cOcllips * restrict K;
+	cOcllips *K;
 	K = (cOcllips *)D.longValue;
 	
 	// Check that the number of bufferRows does not exceed the device buffer size
@@ -634,8 +644,8 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		
 		
 		// Let's see if this does the trick...
-		float __attribute__ ((aligned (16))) * restrict dataBuffer_r;
-		float __attribute__ ((aligned (16))) * restrict dataBuffer_i;
+		float __attribute__ ((aligned (32))) *dataBuffer_r;
+		float __attribute__ ((aligned (32))) *dataBuffer_i;
 		
 		dataBuffer_r = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
 		dataBuffer_i = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
@@ -662,11 +672,13 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			if (K->numRmatRows >= K->numCols)
 			{
 				rowsToRotate = * bufferRows;
-				numColumns = K->numRmatCols;
+				//numColumns = K->numRmatCols;
+				numColumns = K->numCols;
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full_c.inc"
+				//#include "rot_full_c.inc"
+				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 			
 			}
 			// else: will R matrix become full with this buffer?
@@ -680,21 +692,25 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full_c.inc"
+				//#include "rot_full_c.inc"
+				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				rowsToRotate = numRows1;
 				numColumns = numRows1;
 				fRow = 0;
 				fCol = K->numRmatRows;
 				
-				#include "rot_partial_c.inc"
+				//#include "rot_partial_c.inc"
+				cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				rowsToRotate = numRows2;
-				numColumns = K->numRmatCols;
+				//numColumns = K->numRmatCols;
+				numColumns = K->numCols;
 				fRow = numRows1;
 				fCol = 0;
 				
-				#include "rot_full_c.inc"
+				//#include "rot_full_c.inc"
+				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 			}
 			// else: first do normal full rotations and then partial rotations
@@ -705,14 +721,17 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 				fRow = 0;
 				fCol = 0;
 				
-				#include "rot_full_c.inc"
+				//#include "rot_full_c.inc"
+				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
+				clFinish(*K->commandqueue);
 				rowsToRotate = *bufferRows;
 				numColumns = *bufferRows;
 				fRow = 0;
 				fCol = K->numRmatRows;
 				
-				#include "rot_partial_c.inc"
+				//#include "rot_partial_c.inc"
+				cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 			
 			}
 		}
@@ -724,7 +743,8 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			fRow = 0;
 			fCol = K->numRmatRows;
 			
-			#include "rot_partial_c.inc"
+			//#include "rot_partial_c.inc"
+			cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 		
 		}
 		
@@ -751,13 +771,13 @@ void cGetDataOcllips(int *ref, double *double_dataBuffer_r, double *double_dataB
 	D.II[0] = ref[0];
 	D.II[1] = ref[1];
 	
-	cOcllips * restrict K;
+	cOcllips *K;
 	K = (cOcllips *)D.longValue;
 	
 	cl_int error;
 	
-	float __attribute__ ((aligned (16))) * restrict dataBuffer_r;
-	float __attribute__ ((aligned (16))) * restrict dataBuffer_i;
+	float __attribute__ ((aligned (32))) *dataBuffer_r;
+	float __attribute__ ((aligned (32))) *dataBuffer_i;
 	dataBuffer_r = malloc(sizeof(float) * K->sizeRmat);
 	dataBuffer_i = malloc(sizeof(float) * K->sizeRmat);
 	
