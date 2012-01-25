@@ -64,7 +64,8 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	// Column size of OpenCL buffers (smallest multiple of workgroup size that
 	// contains both theory matrix columns and measurements)
-	K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
+	//K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
+	K->numRmatCols = *ncols + *nrhs;
 	
 	// Numbers whose absolute value is smaller than zThreshold are 
 	// considered as zeroes

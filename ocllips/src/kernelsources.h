@@ -36,8 +36,10 @@ const char *sKernelSource = "\n" \
 "	{\n" \
 "		rotRow = firstRow - currentRotation;\n" \
 "		rotCol = firstCol + currentRotation;\n" \
-"		firstBlock = rotCol / locSize;\n" \
-"		numBlocks = nCols / locSize - firstBlock;\n" \
+"		//firstBlock = rotCol / locSize;\n" \
+"		firstBlock = rotCol;\n" \
+"		//numBlocks = nCols / locSize - firstBlock;\n" \
+"		numBlocks = nCols - firstBlock;\n" \
 "		\n" \
 "	\n" \
 "		float a, b, sqab;\n" \
@@ -71,22 +73,23 @@ const char *sKernelSource = "\n" \
 "	}\n" \
 "	\n" \
 "	int curBlock;\n" \
-"	for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
+"	//for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
+"	for(curBlock = lid; curBlock < nCols; curBlock+=locSize)\n" \
 "	{\n" \
-"		locR1 = Rmat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2 = BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
+"		locR1 = Rmat[rotCol * nCols + (firstBlock + curBlock)];\n" \
+"		locR2 = BufferMat[rotRow * nCols + (firstBlock + curBlock)];\n" \
 "				\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			Rmat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotSin * locR2;\n" \
+"			Rmat[rotCol * nCols + (firstBlock + curBlock) ] = rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = -rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = -rotSin * locR1;\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			Rmat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR1 + rotSin * locR2;\n" \
+"			Rmat[rotCol * nCols + (firstBlock + curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR2 - rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (firstBlock + curBlock) ] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "	}	\n" \
 "	//barrier(CLK_GLOBAL_MEM_FENCE);\n" \
@@ -114,8 +117,8 @@ const char *sKernelSource = "\n" \
 "	{\n" \
 "		rotRow = firstRow - currentRotation;\n" \
 "		rotCol = firstCol + currentRotation;\n" \
-"		firstBlock = (rotCol + colOffset) / locSize;\n" \
-"		numBlocks = nCols / locSize - firstBlock;\n" \
+"		firstBlock = (rotCol + colOffset);\n" \
+"		numBlocks = nCols - firstBlock;\n" \
 "		\n" \
 "	\n" \
 "		float a, b, sqab;\n" \
@@ -149,22 +152,22 @@ const char *sKernelSource = "\n" \
 "	}\n" \
 "	\n" \
 "	int curBlock;\n" \
-"	for(curBlock = 0; curBlock < numBlocks; curBlock++)\n" \
+"	for(curBlock = lid; curBlock < nCols; curBlock+=locSize)\n" \
 "	{\n" \
-"		locR1 = BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
-"		locR2 = BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize];\n" \
+"		locR1 = BufferMat[rotCol * nCols + (firstBlock + curBlock)];\n" \
+"		locR2 = BufferMat[rotRow * nCols + (firstBlock + curBlock)];\n" \
 "\n" \
 "		if (swap)\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + (firstBlock + curBlock)] = rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = -rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = -rotSin * locR1;\n" \
 "		}\n" \
 "		else\n" \
 "		{\n" \
-"			BufferMat[rotCol * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR1 + rotSin * locR2;\n" \
+"			BufferMat[rotCol * nCols + (firstBlock + curBlock)] = rotCos * locR1 + rotSin * locR2;\n" \
 "		\n" \
-"			BufferMat[rotRow * nCols + lid + (firstBlock + curBlock) * locSize] = rotCos * locR2 - rotSin * locR1;\n" \
+"			BufferMat[rotRow * nCols + (firstBlock + curBlock)] = rotCos * locR2 - rotSin * locR1;\n" \
 "		}\n" \
 "	}\n" \
 "	\n" \

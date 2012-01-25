@@ -55,12 +55,10 @@ void sFullRotations(sOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 		// Set up kernel arguments
 		int n = 0;
 		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat);
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat);
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat);
 		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstRow);
 		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);					
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);					
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", (int) err1);
@@ -117,14 +115,12 @@ void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 		// Set up kernel arguments
 		int n = 0;
 		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat_r);
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat_i);
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_r);
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_i);
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat_i);
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_r);
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_i);
 		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstRow);
 		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);					
+		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);				
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", err1);
