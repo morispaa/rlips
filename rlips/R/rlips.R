@@ -288,7 +288,7 @@ rlips.rotate <- function(e)
     	{
     		.C("sRotateOcllips",
     			as.integer(e$ref),
-    			as.single(data),
+    			as.double(data),
     			as.integer(e$brows))
     	}
     	else if (e$type == 'c')
@@ -355,10 +355,10 @@ rlips.get.data <- function(e)
 	{
 		res <- .C("sGetDataOcllips",
 				as.integer(e$ref),
-				data = single(e$ncols * e$buffer.cols),
+				data = double(e$ncols * e$buffer.cols),
 				data.rows = integer(1))
 		#data <- res$data	
-		data.mat <- matrix(as.double(res$data),e$ncols,e$buffer.cols,byrow=TRUE)	
+		data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)	
 	}
 	else if (e$type == 'c')
 	{

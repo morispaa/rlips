@@ -244,7 +244,7 @@ void sKillOcllips(int *ref)
 // RotateOcllips
 // Takes dataBuffer containing theory matrix rows and measurements and
 // sends it to device. Then makes the rotations.
-void sRotateOcllips(int *ref, float *dataBuffer, int *bufferRows)
+void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 {
 	// Construct address
 	addr D;
@@ -274,13 +274,13 @@ void sRotateOcllips(int *ref, float *dataBuffer, int *bufferRows)
 		
 		
 		// Let's see if this does the trick...
-		//float __attribute__ ((aligned (32))) *dataBuffer;
-		//dataBuffer = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
-		//
-		//for (i=0 ; i< *bufferRows * K->numRmatCols ; i++)
-		//{
-		//	dataBuffer[i] = (float) double_dataBuffer[i];
-		//}
+		float __attribute__ ((aligned (32))) *dataBuffer;
+		dataBuffer = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
+		
+		for (i=0 ; i< *bufferRows * K->numRmatCols ; i++)
+		{
+			dataBuffer[i] = (float) double_dataBuffer[i];
+		}
 		
 		
 		
@@ -390,7 +390,7 @@ void sRotateOcllips(int *ref, float *dataBuffer, int *bufferRows)
 
 // GetDataOcllips
 // Fetches R matrix from device and sends it back to R.
-void sGetDataOcllips(int *ref, float *dataBuffer, int *dataRows)
+void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
 {
 	// Construct address
 	addr D;
@@ -402,8 +402,8 @@ void sGetDataOcllips(int *ref, float *dataBuffer, int *dataRows)
 	
 	cl_int error;
 	
-	//float __attribute__ ((aligned (32))) *dataBuffer;
-	//dataBuffer = malloc(sizeof(float) * K->sizeRmat);
+	float __attribute__ ((aligned (32))) *dataBuffer;
+	dataBuffer = malloc(sizeof(float) * K->sizeRmat);
 	
 	// Read dRmat from device to dataBuffer
 	error = clEnqueueReadBuffer(*K->commandqueue,K->dRmat,CL_TRUE,0,sizeof(float) * K->sizeRmat,dataBuffer,0,NULL,NULL);
@@ -414,14 +414,15 @@ void sGetDataOcllips(int *ref, float *dataBuffer, int *dataRows)
 		return;
 	}
 	
-	//int i;
-	//for (i=0 ; i < K->sizeRmat ; i ++)
-	//{
-	//	double_dataBuffer[i] = (double) dataBuffer[i];
-	//}
+	int i;
+	for (i=0 ; i < K->sizeRmat ; i ++)
+	{
+		double_dataBuffer[i] = (double) dataBuffer[i];
+	}
 	
 	// Return to R the total number of rows in R matrix.
 	*dataRows = K->numTotRows;
+	free(dataBuffer);
 }
 
 
