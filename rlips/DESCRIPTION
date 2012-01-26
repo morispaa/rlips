@@ -1,7 +1,7 @@
-Package: ocllips
-Version: 0.1-0
-Date: 2011-11-01
-Title: OpenCL Linear Inverse Problem Solver
+Package: rlips
+Version: 0.5-0
+Date: 2012-01-26
+Title: R Linear Inverse Problem Solver
 Author@R: c(person("Mikko","Orispää",email="mikko.orispaa@oulu.fi"))
 Author: Mikko Orispää <mikko.orispaa@oulu.fi>
 Maintainer: Mikko Orispää <mikko.orispaa@oulu.fi>

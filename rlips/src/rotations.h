@@ -1,7 +1,7 @@
 #ifndef ROT_FULL_H
 #define ROT_FULL_H
 
-#include "ocllips.h"
+#include "rlips.h"
 
 void sFullRotations(sOcllips *, int, int, int, int);
 void sPartialRotations(sOcllips *, int, int, int, int);

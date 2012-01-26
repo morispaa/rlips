@@ -1,6 +1,14 @@
-//file: ocllips.h
+//file: rlips.h
 
-// OpenCL-LIPS C functions; called from R
+// R Linear Inverse Problem Solver
+// Version 0.5
+// 
+// This version contains only OpenCL versions of single precision real
+// and complex routines.
+//
+// The final version will have both single and double precision real and complex 
+// routines, and OpenCL version are used only if OpenCL libraries are installed and
+// OpenCL capable GPU is present.
 
 
 // (c) 2011- University of Oulu, Finland
@@ -22,7 +30,7 @@
 #include<CL/opencl.h>
 #endif
 
-#include "ocllips.h"
+#include "rlips.h"
 #include "rotations.h"
 #include "kernelsources.h"
 
@@ -154,9 +162,9 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	}
 	
 	// Create the kernel functions
-	*K->fullRotKernel = clCreateKernel(*K->kernel_program,"full_rotations",&error);
+	*K->fullRotKernel = clCreateKernel(*K->kernel_program,"s_full_rotations",&error);
 	cl_int error2;
-	*K->partRotKernel = clCreateKernel(*K->kernel_program,"partial_rotations",&error2);
+	*K->partRotKernel = clCreateKernel(*K->kernel_program,"s_partial_rotations",&error2);
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
 		printf("Could not create kernel! Error codes: %d, %d. Exiting sInitOcllips.\n",error,error2);
@@ -534,9 +542,9 @@ void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	}
 	
 	// Create the kernel functions
-	*K->fullRotKernel = clCreateKernel(*K->kernel_program,"full_rotations",&error);
+	*K->fullRotKernel = clCreateKernel(*K->kernel_program,"c_full_rotations",&error);
 	cl_int error2;
-	*K->partRotKernel = clCreateKernel(*K->kernel_program,"partial_rotations",&error2);
+	*K->partRotKernel = clCreateKernel(*K->kernel_program,"c_partial_rotations",&error2);
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
 		printf("Could not create kernel! Error codes: %d, %d. Exiting sInitOcllips.\n",error,error2);

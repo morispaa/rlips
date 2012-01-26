@@ -14,7 +14,7 @@
 
 // Single precision real
 const char *sKernelSource = "\n" \
-" __kernel void full_rotations( __global float* Rmat,__global float* BufferMat, int firstRow, int firstCol, int nCols)\n" \
+" __kernel void s_full_rotations( __global float* Rmat,__global float* BufferMat, int firstRow, int firstCol, int nCols)\n" \
 "{\n" \
 "	int currentRotation = get_group_id(0); \n" \
 "	int lid = get_local_id(0);\n" \
@@ -96,7 +96,7 @@ const char *sKernelSource = "\n" \
 "}\n" \
 "\n" \
 "\n" \
-"__kernel void partial_rotations( __global float* BufferMat, int firstRow, int firstCol, int nCols,int colOffset)\n" \
+"__kernel void s_partial_rotations( __global float* BufferMat, int firstRow, int firstCol, int nCols,int colOffset)\n" \
 "{\n" \
 "	int currentRotation = get_group_id(0); \n" \
 "	int lid = get_local_id(0);\n" \
@@ -190,7 +190,7 @@ const char *cKernelSource = "// file: partialrot.cl\n" \
 " #define cmult_i(a,b,x,y) ((a)*(y) + (b)*(x))\n" \
 " \n" \
 " \n" \
-" __kernel void full_rotations( __global float* Rmat_r,__global float* Rmat_i,\n" \
+" __kernel void c_full_rotations( __global float* Rmat_r,__global float* Rmat_i,\n" \
 " 								__global float* BufferMat_r, __global float* BufferMat_i,\n" \
 " 								int firstRow, int firstCol, int nCols)\n" \
 "{\n" \
@@ -327,7 +327,7 @@ const char *cKernelSource = "// file: partialrot.cl\n" \
 "\n" \
 "\n" \
 "\n" \
-"__kernel void partial_rotations( __global float* BufferMat_r, __global float* BufferMat_i, int firstRow, int firstCol, int nCols,int colOffset)\n" \
+"__kernel void c_partial_rotations( __global float* BufferMat_r, __global float* BufferMat_i, int firstRow, int firstCol, int nCols,int colOffset)\n" \
 "{\n" \
 "	int currentRotation = get_group_id(0); \n" \
 "	int lid = get_local_id(0);\n" \
