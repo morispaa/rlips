@@ -13,15 +13,15 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64)
 	e$ref <- c(0,0)
 	e$ncols <- ncols
 	e$nrhs <- nrhs
-  if (nbuf > ncols)
-  {
-    cat("nbuf too large! Setting nbuf to ",ncols,"\n")
-    e$nbuf <- ncols
-  }
-  else
-  {
+  #if (nbuf > ncols)
+  #{
+  #  cat("nbuf too large! Setting nbuf to ",ncols,"\n")
+  #  e$nbuf <- ncols
+  #}
+  #else
+  #{
     e$nbuf <- nbuf  
-  }
+  #}
 
   if (workgroup.size%%16 != 0)
   {
@@ -33,7 +33,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64)
 	
   if (type != 's' && type != 'c')
   {
-    stop('Only single precission real type implemented! Exiting!')
+    stop('Only single precission real and complex types implemented! Exiting!')
   }
 	
 	e$nrows <- 0 # Number of total rows fed into system
@@ -53,7 +53,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64)
 					as.integer(ncols),
 					as.integer(nrhs),
 					as.integer(e$nbuf),
-          as.integer(e$wg.size))$aa
+          			as.integer(e$wg.size))$aa
 	}
 	else if (type == 'c')
 	{
@@ -62,7 +62,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64)
 					as.integer(ncols),
 					as.integer(nrhs),
 					as.integer(e$nbuf),
-          as.integer(e$wg.size))$aa
+          			as.integer(e$wg.size))$aa
 	}
  	else
  	{
@@ -275,10 +275,10 @@ rlips.rotate <- function(e)
 {
 	#cat("Going to rotate ",e$brows," buffer rows\n",sep="")
 
-  if (e$brows > e$nbuf)
-  {
-    stop("Something fishy going on? Environment should not have this many buffer rows at this point! Doin' nuthin'!")
-  }
+  #if (e$brows > e$nbuf)
+  #{
+  #  stop("Something fishy going on? Environment should not have this many buffer rows at this point! Doin' nuthin'!")
+  #}
 	if (e$brows > 0)
 	{
 		data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)

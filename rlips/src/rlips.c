@@ -362,17 +362,39 @@ void sRotateOcllips(int *ref, double *double_dataBuffer, int *bufferRows)
 			
 			}
 		}
-		// else: do just partial rotations. This is only done if R matrix is empty
+		// else: These are the first rotations
 		else
 		{
-			rowsToRotate = *bufferRows;
-			numColumns = *bufferRows;
-			fRow = 0;
-			fCol = K->numRmatRows;
+			if (*bufferRows > K->numCols)
+			{
+				rowsToRotate = K->numCols;
+				numColumns = K->numCols;
+				fRow = 0;
+				fCol = 0;
+				
+				//#include "rot_partial.inc"
+				sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
+				
+				rowsToRotate = *bufferRows - K->numCols;
+				numColumns = K->numCols;
+				fRow = K->numCols;
+				fCol = 0;
+				
+				//#include "rot_full.inc"
+				sFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
+				
+				
+			}
+			else
+			{
+				rowsToRotate = *bufferRows;
+				numColumns = *bufferRows;
+				fRow = 0;
+				fCol = 0;
 			
-			//#include "rot_partial.inc"
-			sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
-		
+				//#include "rot_partial.inc"
+				sPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
+			}
 		}
 		
 		// Update internal parameters
@@ -749,13 +771,36 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		// else: do just partial rotations. This is only done if R matrix is empty
 		else
 		{
-			rowsToRotate = *bufferRows;
-			numColumns = *bufferRows;
-			fRow = 0;
-			fCol = K->numRmatRows;
+			if (*bufferRows > K->numCols)
+			{
+				rowsToRotate = K->numCols;
+				numColumns = K->numCols;
+				fRow = 0;
+				fCol = 0;
+				
+				//#include "rot_partial.inc"
+				cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
+				
+				rowsToRotate = *bufferRows - K->numCols;
+				numColumns = K->numCols;
+				fRow = K->numCols;
+				fCol = 0;
+				
+				//#include "rot_full.inc"
+				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
+				
+				
+			}
+			else
+			{
+				rowsToRotate = *bufferRows;
+				numColumns = *bufferRows;
+				fRow = 0;
+				fCol = K->numRmatRows;
 			
-			//#include "rot_partial_c.inc"
-			cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
+				//#include "rot_partial_c.inc"
+				cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
+			}
 		
 		}
 		

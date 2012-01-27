@@ -36,8 +36,17 @@ void sFullRotations(sOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
+		int nn;
+		if (rowsToRotate > numColumns)
+		{
+			nn = numColumns;
+		}
+		else
+		{
+			nn = rowsToRotate;
+		}
 		int numRotations;
-		numRotations = min(stage, rowsToRotate);
+		numRotations = min(stage, nn);
 		numRotations = min(numRotations, totalStages - stage + 1);
 		
 		int firstRow, firstCol;
@@ -96,8 +105,18 @@ void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
+		int nn;
+		if (rowsToRotate > numColumns)
+		{
+			nn = numColumns;
+		}
+		else
+		{
+			nn = rowsToRotate;
+		}
+		
 		int numRotations;
-		numRotations = min(stage, rowsToRotate);
+		numRotations = min(stage, nn);
 		numRotations = min(numRotations, totalStages - stage + 1);
 		
 		int firstRow, firstCol;
