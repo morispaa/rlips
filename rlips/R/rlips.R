@@ -6,7 +6,7 @@
 
 
 ## Init RLIPS object
-rlips.init <- function(ncols,nrhs,type='s',nbuf=100,workgroup.size=64) 
+rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128) 
 {
 	e <- new.env()
 	
@@ -122,89 +122,164 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
     stop("Not an active rlips environment! Nothing done!")
   }
   
-	# Make sure all data are matrices
-	A.data <-as.matrix(A.data)
-	M.data <-as.matrix(M.data)
-	E.data <-as.matrix(E.data)
-	
-	# Data dimensions & check
-	A.dim <- dim(A.data)
-	M.dim <- dim(M.data)
-	E.dim <- dim(E.data)
-	
-	data.rows <- A.dim[1]
-	
-	# Check dims of A
-	if (A.dim[2] != e$ncols)
+  ## Is error given as a matrix
+	if (is.matrix(E.data))
 	{
-		stop('Error in rlips.add: A.data has wrong number of columns!')
-	}
-	
-	# Check dims of M
-	if (all(M.dim != c(data.rows,e$nrhs)))
-	{
-		stop('Error in rlips.add: M.data has wrong size!')
-	}
-	
-	## cat(all(E.dim==c(1,1)),'\n')
-	
-	# Check dims of E and get rid of it.
-	# It can be either single scalar, vector or matrix
-	if (all(E.dim == c(1,1)))
-	{
-		# Single scalar error variance
-		if (E.data != 1)
-		{
-			err <- 1/sqrt(as.vector(E.data))
-			A.data <- as.vector(err) * A.data
-			M.data <- as.vector(err) * M.data
-		}
-	}
-	else if (all(E.dim == c(data.rows,1)))
-	{
-		# Error variances given as vector, i.e., diagonal of
-		# error covariance matrix
-		err <- 1/sqrt(err)
-		A.data <- diag(as.vector(err)) %*% A.data
-		M.data <- as.vector(err) * M.data
-	}
-	else if (all(E.dim == c(data.rows,data.rows)))
-	{
-		# Full error covariance matrix
-		C <- chol(E.data)
-		A.data <- backsolve(C,A.data,transpose=T)
-		M.data <- backsolve(C,M.data,transpose=T)
+		Emat=TRUE
 	}
 	else
 	{
-		stop('Error in rlips.add: E.data has wrong size!')
+		Emat=FALSE
 	}
+	
+	## theory matrix
+	if (is.vector(A.data))
+	{
+		if (length(A.data)/e$ncols != as.integer(length(A.data)/e$ncols))
+		{
+			stop('rlips.add: theory matrix has wrong size!')
+		}
+		else
+		{
+			num.rows <- length(A.data)/e$ncols
+		}
+		
+		## Reshape into a matrix
+		A.data <- t(matrix(A.data,e$ncols,num.rows))
+	}	
+	else
+	{
+		if (ncol(A.data) != e$ncols)
+		{
+			stop('rlips.add: theory matrix has wrong number of columns!')
+		}
+		else
+		{
+			num.rows <- nrow(A.data)
+		}
+	}
+	
+	## measurement
+
+	
+	if (is.vector(M.data))
+	{
+		if (length(M.data) != e$nrhs * num.rows)
+		{
+			stop('rlips.add: measurement vector has wrong size!')
+		}
+		else
+		{
+			## reshape as matrix
+			M.data <- t(matrix(M.data,e$nrhs,num.rows))
+		}
+	}
+	else
+	{
+		if (!all(c(num.rows,e$nrhs)==dim(M.data)))
+		{
+			stop('rlips.add: measurement matrix has wrong shape!')
+		}
+	}
+	
+
+	
+	## error
+	if (Emat)
+	{
+		if (!all(c(num.rows,num.rows)==dim(E.data)))
+		{
+			stop('rlips.add: error covariance matrix has wrong size!')
+		}
+		else
+		{
+			C <- chol(E.data)
+			A.data <- backsolve(C,A.data,transpose=T)
+			M.data <- backsolve(C,M.data,transpose=T)
+			E.data <- rep(1.0,num.rows)	
+		}	
+	}
+	else
+	{
+		if (length(E.data)==1)
+		{
+			E.data <- rep(E.data,num.rows)
+		}
+		else
+		{
+			if ( length(E.data) != num.rows)
+			{
+				stop('rlips.add: error vector has wrong length!')
+			}
+		}
+	}
+  
+  
+  
+#	# Make sure all data are matrices
+#	A.data <-as.matrix(A.data)
+#	M.data <-as.matrix(M.data)
+#	E.data <-as.matrix(E.data)
+#	
+#	# Data dimensions & check
+#	A.dim <- dim(A.data)
+#	M.dim <- dim(M.data)
+#	E.dim <- dim(E.data)
+#	
+#	data.rows <- A.dim[1]
+#	
+#	# Check dims of A
+#	if (A.dim[2] != e$ncols)
+#	{
+#		stop('Error in rlips.add: A.data has wrong number of columns!')
+#	}
+#	
+#	# Check dims of M
+#	if (all(M.dim != c(data.rows,e$nrhs)))
+#	{
+#		stop('Error in rlips.add: M.data has wrong size!')
+#	}
+#	
+#	## cat(all(E.dim==c(1,1)),'\n')
+#	
+#	# Check dims of E and get rid of it.
+#	# It can be either single scalar, vector or matrix
+#	if (all(E.dim == c(1,1)))
+#	{
+#		# Single scalar error variance
+#		if (E.data != 1)
+#		{
+#			err <- 1/sqrt(as.vector(E.data))
+#			A.data <- as.vector(err) * A.data
+#			M.data <- as.vector(err) * M.data
+#		}
+#	}
+#	else if (all(E.dim == c(data.rows,1)))
+#	{
+#		# Error variances given as vector, i.e., diagonal of
+#		# error covariance matrix
+#		err <- 1/sqrt(err)
+#		A.data <- diag(as.vector(err)) %*% A.data
+#		M.data <- as.vector(err) * M.data
+#	}
+#	else if (all(E.dim == c(data.rows,data.rows)))
+#	{
+#		# Full error covariance matrix
+#		C <- chol(E.data)
+#		A.data <- backsolve(C,A.data,transpose=T)
+#		M.data <- backsolve(C,M.data,transpose=T)
+#	}
+#	else
+#	{
+#		stop('Error in rlips.add: E.data has wrong size!')
+#	}
 	
 	#cat("rotation init: ",proc.time()-ttt,"\n")	
     
 
- #  #ttt<-proc.time()
-#   #Join A and M and insert in buffer
-#   buffer <- matrix(0,data.rows,e$buffer.cols)
-#   buffer[,1:e$ncols] <- A.data
-#   buffer[,(e$ncols+1):(e$ncols+e$nrhs)] <- M.data
-#    
-#   # Add new buffer rows to buffer
-#   if (e$brows > 0)
-#   {
-#   e$buffer <- rbind(e$buffer,buffer)
-#   }
-#   else
-#   {
-#   	e$buffer <- buffer
-#   }
-#   
-#   e$brows <- e$brows + data.rows
-#   
-#   #cat("rotation joining: ",proc.time()-ttt,"\n")
 
 	# Move data to buffer
-	for (i in seq(data.rows))
+	for (i in seq(num.rows))
 	{
 		e$buffer[e$brows+1,1:e$ncols] <- A.data[i,]
 		e$buffer[e$brows+1,(e$ncols+1):(e$ncols+e$nrhs)] <- M.data[i,]
@@ -219,54 +294,6 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 	}
 
 
-  # #ttt<-proc.time()
-#   # Make rotations if necessary
-#   loops <- floor(e$brows/e$nbuf)
-#   #cat("loops: ",loops,"\n")
-#   #if (loops > 0)
-#   #{
-#   for (q in 1:loops)
-#   #while (e$brows >= e$nbuf)
-#   {
-#   	#q<-1
-#   	start.row <- (q-1) * e$nbuf + 1
-#   	end.row <- q * e$nbuf
-#   	#qqq<-proc.time()
-#   	data <- matrix(t(e$buffer[start.row:end.row,]),e$nbuf*e$buffer.cols)
-#   	#cat("buffer manipulation: ",proc.time()-qqq,"\n")
-#   	
-#     ## rotate first nbuf rows
-#     if (e$type == 's')
-#     {
-#     	.C("sRotateOcllips",
-#     		as.integer(e$ref),
-#     		as.double(data),
-#     		as.integer(e$nbuf))
-#     }
-#     else if (e$type == 'c')
-#     {
-#     	.C("cRotateOcllips",
-#     		as.integer(e$ref),
-#     		as.double(Re(data)),
-#     		as.double(Im(data)),
-#     		as.integer(e$nbuf))
-#     }	
-#     #cat("Rotation:\n",tt,"\n")
-#     
-#     #qqq<-proc.time()
-#     #e$buffer <- e$buffer[-(1:e$nbuf),]
-#     #cat("buffer manipulation: ",proc.time()-qqq,"\n")
-#     e$brows <- e$brows - e$nbuf
-#   #}
-#   }
-#   #cat("rotation loop: ",proc.time()-ttt,"\n")
-#   
-#   e$buffer <- e$buffer[-(1:(e$nbuf*loops)),]
-#   
-#   # Update internal parameters
-#   e$nrows <- e$nrows + data.rows
-#   e$rrows <- min(e$ncols,e$rrows + data.rows)
-#   
 
 }
 
@@ -312,7 +339,7 @@ rlips.rotate <- function(e)
 
 ## Solve system
 
-rlips.solve <- function(e,calculate.covariance=FALSE)
+rlips.solve <- function(e,calculate.covariance=FALSE,full.covariance=FALSE)
 {
 	if (e$brows > 1) rlips.rotate(e)
 	
@@ -331,15 +358,39 @@ rlips.solve <- function(e,calculate.covariance=FALSE)
     
     if (calculate.covariance)
     {
-    	if (e$type == 's')
+    	if (full.covariance)
     	{
-      		e$covariance <- backsolve(e$R.mat,diag(rep(1,e$ncols)))
-      		e$covariance <- e$covariance %*% t(e$covariance)
+    		if (e$type == 's')
+    		{
+      			e$covariance <- backsolve(e$R.mat,diag(rep(1,e$ncols)))
+      			e$covariance <- e$covariance %*% t(e$covariance)
+      		}
+      		else if (e$type == 'c')
+      		{
+      			e$covariance <- solve(e$R.mat,diag(rep(1,e$ncols)))
+      			e$covariance <- e$covariance %*% Conj(t(e$covariance))
+      		}
       	}
-      	else if (e$type == 'c')
+      	else
       	{
-      		e$covariance <- solve(e$R.mat,diag(rep(1,e$ncols)))
-      		e$covariance <- e$covariance %*% t(e$covariance)
+      		if (e$type == 's')
+    		{
+      			e$iR.mat <- backsolve(e$R.mat,diag(rep(1,e$ncols)))
+      			e$covariance<- rep(0,e$ncols)
+      			for (i in 1:e$ncols)
+      			{
+      				e$covariance[i] <- sum(e$iR.mat[i,i:e$ncols]**2)
+      			}
+      		}
+      		else if (e$type == 'c')
+      		{
+      			e$iR.mat <- solve(e$R.mat,diag(rep(1,e$ncols)))
+      			e$covariance<- rep(0,e$ncols)
+      			for (i in 1:e$ncols)
+      			{
+      				e$covariance[i] <- sum(e$iR.mat[i,i:e$ncols]*Conj(e$iR.mat[i,i:e$ncols]))
+      			}
+      		}
       	}
     }
     
@@ -384,7 +435,7 @@ rlips.get.data <- function(e)
 ## 
 
 
-rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128,return.data=FALSE)
+rlips.test <- function(type,size,buffersize,loop=1,wg.size=128,return.data=FALSE,averaging.fun=mean)
 {
   ncols <- size[2]
 	rows <- size[1]
@@ -402,34 +453,29 @@ rlips.test <- function(type,size,buffersizes,loop=1,wg.size=128,return.data=FALS
 	
 	m<-A%*%sol
 	
-	n<-length(buffersizes)
-	acc <- rep(0,n)
-	times <- rep(0,n)
+	#n<-length(buffersize)
+	acc <- rep(0,loop)
+	times <- rep(0,loop)
   	flops <- 2 * ncols**3 + 3 * ncols**2 - 5 * ncols + 6 * (rows - ncols) * ncols + 3 * (rows - ncols) * ncols * (ncols + 1)
 	
 	for(k in 1:loop)
 	{
-	  for (i in 1:n)
-	  {
-	  	ss<-rlips.problem(type,A,m,buffersizes[i],wg.size,return.data)
-	  	times[i] <- times[i] + ss$time[3]
-	  	acc[i] <- acc[i] + max(abs(sol - ss$sol))
-
-			
-	  }
+	  ss<-rlips.problem(type,A,m,buffersize,wg.size,return.data)
+	  times[k] <- ss$time[3]
+	  acc[k] <- max(abs(sol - ss$sol))	
 	}
   
-	times <- times/loop
-	acc <- acc/loop
-    Gflops <- flops/1.0E9 / times
+	a.time <- averaging.fun(times)
+	a.acc <- averaging.fun(acc)
+    Gflops <- flops/1.0E9 / a.time
 	
 	if (return.data)
 	{
-		return(list(times=times,accuracy=acc,Gflops=Gflops,R=ss$R,Y=ss$Y))
+		return(list(times=a.time,accuracy=a.acc,Gflops=Gflops,R=ss$R,Y=ss$Y))
 	}
 	else
 	{
-		return(list(times=times,accuracy=acc,Gflops=Gflops))
+		return(list(times=a.time,accuracy=a.acc,Gflops=Gflops))
 	}
 }
 
