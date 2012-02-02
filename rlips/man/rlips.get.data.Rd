@@ -6,7 +6,7 @@
 \description{Fetches the target matrix R and the target vector Y from the GPU. }
 
 \usage{
-rlips.get.data(e))
+rlips.get.data(e)
 }
 
 \arguments{
@@ -27,8 +27,6 @@ reason to use this in normal operation.
 
 \author{Mikko Orispaa (University of Oulu, Finland) \email{mikko.orispaa@oulu.fi}}
 
-\examples{
-
-}
+%\examples{}
 
 \keyword{algebra}

@@ -47,8 +47,6 @@ square matrix with size \code{num.rows}-by-\code{num.rows}.
 
 \author{Mikko Orispaa (University of Oulu, Finland) \email{mikko.orispaa@oulu.fi}}
 
-\examples{
-
-}
+%\examples{}
 
 \keyword{algebra}

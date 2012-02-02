@@ -7,7 +7,7 @@
 	Initializes a new rlips environment.}
 	
 \usage{
-	h <- rlips.init(ncols,nrhs,type='s',nbuf=100,workgroup.size=128) 
+	rlips.init(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128) 
 	}
 	
 \arguments{
@@ -29,12 +29,12 @@
 	default rotation buffer is of the same size as the problem after rotations. Size of the buffer can
 	have a significant impact on performance. The optimal size of the buffer depends on the problem and
 	also on computer hardware. Small buffers conserve computer memory but tend to slow rlips down.}
-	}
 	
 	\item{workgroup.size}{Size of the OpenCL workgroup. Optimal size depends on GPU hardware. Usually, This
 	should be of form \code{2**n}, where \code{n = 2,3,...,10}. Typical optimal value for NVIDIA GPU's is 128 and
 	for AMD GPU's 256. Your mileage may vary.}
-	
+
+}
 
 
 \value{

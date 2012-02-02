@@ -53,7 +53,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 					as.integer(ncols),
 					as.integer(nrhs),
 					as.integer(e$nbuf),
-          			as.integer(e$wg.size))$aa
+          			as.integer(e$wg.size),PACKAGE="rlips")$aa
 	}
 	else if (type == 'c')
 	{
@@ -62,7 +62,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 					as.integer(ncols),
 					as.integer(nrhs),
 					as.integer(e$nbuf),
-          			as.integer(e$wg.size))$aa
+          			as.integer(e$wg.size),PACKAGE="rlips")$aa
 	}
  	else
  	{
@@ -86,12 +86,12 @@ rlips.dispose <- function(e)
 		if (e$type == 's')
 		{
 			.C("sKillOcllips",
-				as.integer(e$ref))
+				as.integer(e$ref),PACKAGE="rlips")
 		}
 		else if (e$type == 'c')
 		{
 			.C("cKillOcllips",
-				as.integer(e$ref))
+				as.integer(e$ref),PACKAGE="rlips")
 		}
 		else
 		{
@@ -316,7 +316,7 @@ rlips.rotate <- function(e)
     		.C("sRotateOcllips",
     			as.integer(e$ref),
     			as.double(data),
-    			as.integer(e$brows))
+    			as.integer(e$brows),PACKAGE="rlips")
     	}
     	else if (e$type == 'c')
     	{
@@ -324,7 +324,7 @@ rlips.rotate <- function(e)
     			as.integer(e$ref),
     			as.double(Re(data)),
     			as.double(Im(data)),		
-    			as.integer(e$brows))
+    			as.integer(e$brows),PACKAGE="rlips")
     	}
     	
     	e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
@@ -407,7 +407,7 @@ rlips.get.data <- function(e)
 		res <- .C("sGetDataOcllips",
 				as.integer(e$ref),
 				data = double(e$ncols * e$buffer.cols),
-				data.rows = integer(1))
+				data.rows = integer(1),PACKAGE="rlips")
 		#data <- res$data	
 		data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)	
 	}
@@ -417,7 +417,7 @@ rlips.get.data <- function(e)
 				as.integer(e$ref),
 				data = double(e$ncols * e$buffer.cols),
 				data.i = double(e$ncols * e$buffer.cols),
-				data.rows = integer(1))
+				data.rows = integer(1),PACKAGE="rlips")
 		data.mat <- matrix(res$data + 1i*res$data.i,e$ncols,e$buffer.cols,byrow=TRUE)			
 	}
 	
@@ -435,7 +435,7 @@ rlips.get.data <- function(e)
 ## 
 
 
-rlips.test <- function(type,size,buffersize,loop=1,wg.size=128,return.data=FALSE,averaging.fun=mean)
+rlips.test <- function(type,size,buffersize = size[2],loop=1,wg.size=128,return.data=FALSE,averaging.fun=mean)
 {
   ncols <- size[2]
 	rows <- size[1]

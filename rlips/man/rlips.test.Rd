@@ -21,13 +21,14 @@ the function \code{averaging.fun}.}
 \item{averaging.fun}{Function used in averaging the results, if \code{loop} is greater than 1. Default is arithmetic mean.}
 }
 
-\value{Returns a list with components}
-\arguments{
+\value{Returns a list with components:
+\describe{
 \item{time}{Elapsed time for solving the problem using RLIPS.}
 \item{accuracy}{Maximum absolute error.}
 \item{Gflops}{Approximate Gigaflops (floating point operations per second).}
 \item{R}{If \code{return.data=TRUE}, the rotated upper triangular target matrix.}
 \item{Y}{If \code{return.data=TRUE}, the rotated target vector.}
+}
 }
 
 \details{This test routine can (and should) be used to trim the rotation buffer and OpenCL
@@ -37,8 +38,6 @@ workgroup sizes for the used hardware. }
 
 \author{Mikko Orispaa (University of Oulu, Finland) \email{mikko.orispaa@oulu.fi}}
 
-\examples{
-
-}
+%\examples{}
 
 \keyword{algebra}

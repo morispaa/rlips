@@ -2,9 +2,9 @@
 PLAT := $(shell uname)
 
 ifeq ($(PLAT),Darwin)
-PKG_CFLAGS=-O3 -ftree-vectorize -funroll-loops -DMAC 
+PKG_CFLAGS=-DMAC 
 PKG_LIBS=-framework OpenCL
 else
-PKG_CFLAGS=-O3 -ftree-vectorize -funroll-loops -I/usr/local/cuda/include -DLINUX
+PKG_CFLAGS=-I/usr/local/cuda/include -DLINUX
 PKG_LIBS=-lOpenCL -DLINUX
 endif

@@ -1,6 +1,6 @@
 .onLoad <- function(libname,pkgname)
 {
-	cat('##\n',
+	packageStartupMessage('##\n',
 		'## R Linear Inverse Problem Solver (RLIPS)\n',
 		'## \n',
 		'## Copyright (c) 2011 University of Oulu, Finland\n',

@@ -6,13 +6,13 @@
 \description{Deletes the rlips enviroment's internal variables and the files
 used by the environment.}
 
-\usage{rlips.dispose(h)}
+\usage{rlips.dispose(e)}
 
 \arguments{
-	\item{h}{rlips environment to be deleted}
+	\item{e}{rlips environment to be deleted}
 }
 
-\value{None. \code{h} will be an empty environment afterwards.}
+\value{None. \code{e} will be an empty environment afterwards.}
 
 \details{\code{rlips.dispose} will delete all variables in rlips environment \code{h}.}
 
