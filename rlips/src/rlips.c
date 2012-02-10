@@ -20,8 +20,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
-//#include<R.h>
-//#include<Rinternals.h>
+#include<R.h>
+#include<Rinternals.h>
 
 #ifdef MAC
 #include<OpenCL/opencl.h>
@@ -44,12 +44,24 @@
 
 
 
+// Changing the .C calls to .Call
 
 
 
-
-void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
+SEXP sInitOcllips(SEXP NCOLS, SEXP NRHS, SEXP NBUF, SEXP BLOCKSIZE)
 {
+	SEXP ref;
+	PROTECT(ref = allocVector(INTSXP,2));
+	NCOLS = coerceVector(NCOLS,INTSXP);
+	NRHS = coerceVector(NRHS,INTSXP);
+	NBUF = coerceVector(NBUF,INTSXP);
+	BLOCKSIZE = coerceVector(BLOCKSIZE,INTSXP);
+	//intref = AS_INTEGER(REF);
+	int ncols = INTEGER(NCOLS)[0];
+	int nrhs = INTEGER(NRHS)[0];
+	int nbuf = INTEGER(NBUF)[0];
+	int blocksize = INTEGER(BLOCKSIZE)[0];
+ 
 	sOcllips * restrict K;
 	
 	// Allocate new sOcllips struct
@@ -65,14 +77,14 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	K->partRotKernel = malloc(sizeof(cl_kernel));
 	
 	// Set the user provided parameters
-	K->numCols = *ncols;
-	K->numRHS = *nrhs;
-	K->sizeBuffer = *nbuf;
-	K->sizeWorkgroup = *blocksize;
+	K->numCols = ncols;
+	K->numRHS = nrhs;
+	K->sizeBuffer = nbuf;
+	K->sizeWorkgroup = blocksize;
 	
 	// Column size of OpenCL buffers (smallest multiple of workgroup size that
 	// contains both theory matrix columns and measurements)
-	K->numRmatCols = (*ncols + *nrhs + 32 - 1) / 32 * 32;
+	K->numRmatCols = (ncols + nrhs + 32 - 1) / 32 * 32;
 	//K->numRmatCols = *ncols + *nrhs;
 	
 	// Numbers whose absolute value is smaller than zThreshold are 
@@ -207,10 +219,12 @@ void sInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	D.longValue = (long)q;
 	
-	ref[0] = D.II[0];
-	ref[1] = D.II[1];
+	INTEGER(ref)[0] = D.II[0];
+	INTEGER(ref)[1] = D.II[1];
 	
-	return;
+	UNPROTECT(1);	
+
+	return(ref);
 	
 }
 

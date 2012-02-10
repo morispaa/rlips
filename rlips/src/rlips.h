@@ -10,6 +10,8 @@
 #ifndef __OCLLIPS_H
 #define __OCLLIPS_H
 
+#include<R.h>
+#include<Rinternals.h>
 
 #ifdef __APPLE__
 #include<OpenCL/cl.h>
@@ -114,7 +116,7 @@ typedef struct _cocllips
 // ***************************************
 // ***   ocllips function prototypes   ***
 // ***************************************
-void sInitOcllips(int*, int*, int*, int*, int*);
+SEXP sInitOcllips( SEXP, SEXP, SEXP, SEXP);
 void sKillOcllips(int*);
 void sRotateOcllips(int*, double*, int*);
 void sGetDataOcllips(int*, double*, int*);

@@ -48,21 +48,20 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
   # At this point, only single precision real is implemented.
 	if (e$type == 's')
 	{
-		e$ref <- .C("sInitOcllips",
-					aa=integer(2),
-					as.integer(ncols),
-					as.integer(nrhs),
-					as.integer(e$nbuf),
-          			as.integer(e$wg.size),PACKAGE="rlips")$aa
+		e$ref = .Call("sInitOcllips",
+			ncols,
+			nrhs,
+			e$nbuf,
+          		e$wg.size,PACKAGE="rlips")
 	}
 	else if (type == 'c')
 	{
-		e$ref <- .C("cInitOcllips",
-					aa=integer(2),
-					as.integer(ncols),
-					as.integer(nrhs),
-					as.integer(e$nbuf),
-          			as.integer(e$wg.size),PACKAGE="rlips")$aa
+		.Call("cInitOcllips",
+			e$ref,
+			ncols,
+			nrhs,
+			e$nbuf,
+          		e$wg.size,PACKAGE="rlips")
 	}
  	else
  	{
