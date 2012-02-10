@@ -307,22 +307,23 @@ rlips.rotate <- function(e)
   #}
 	if (e$brows > 0)
 	{
-		data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)
+		#rlips.data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)
   	
     	## rotate first nbuf rows
     	if (e$type == 's')
     	{
-    		.C("sRotateOcllips",
-    			as.integer(e$ref),
-    			as.double(data),
-    			as.integer(e$brows),PACKAGE="rlips")
+    		.Call("sRotateOcllips",
+    			e$ref,
+    			t(e$buffer[1:e$brows,]),
+    			e$brows,
+    			PACKAGE="rlips")
     	}
     	else if (e$type == 'c')
     	{
     		.C("cRotateOcllips",
     			as.integer(e$ref),
-    			as.double(Re(data)),
-    			as.double(Im(data)),		
+    			as.double(Re(rlips.data)),
+    			as.double(Im(rlips.data)),		
     			as.integer(e$brows),PACKAGE="rlips")
     	}
     	
