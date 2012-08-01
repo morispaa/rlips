@@ -117,12 +117,12 @@ typedef struct _cocllips
 // ***   ocllips function prototypes   ***
 // ***************************************
 SEXP sInitOcllips( SEXP, SEXP, SEXP, SEXP);
-void sKillOcllips(int*);
+SEXP sKillOcllips(SEXP);
 SEXP sRotateOcllips(SEXP, SEXP, SEXP);
 void sGetDataOcllips(int*, double*, int*);
 
 SEXP cInitOcllips(SEXP, SEXP, SEXP, SEXP);
-void cKillOcllips(int*);
+SEXP cKillOcllips(SEXP);
 SEXP cRotateOcllips(SEXP,SEXP,SEXP,SEXP);
 void cGetDataOcllips(int*, double*, double*, int*);
 

@@ -230,12 +230,14 @@ SEXP sInitOcllips(SEXP NCOLS, SEXP NRHS, SEXP NBUF, SEXP BLOCKSIZE)
 
 // KillOcllips
 // Frees allocated Ocllips and all OpenCL structures associated to it.
-void sKillOcllips(int *ref)
+SEXP sKillOcllips(SEXP REF)
 {
+	REF = coerceVector(REF,INTSXP);
+	
 	// Construct address
 	addr D;
-	D.II[0] = ref[0];
-	D.II[1] = ref[1];
+	D.II[0] = INTEGER(REF)[0];
+	D.II[1] = INTEGER(REF)[1];
 	
 	sOcllips *K;
 	K = (sOcllips *)D.longValue;
@@ -247,11 +249,12 @@ void sKillOcllips(int *ref)
 	if (*K->context) clReleaseContext(*K->context);	
 	
 	if (K->dRmat) clReleaseMemObject(K->dRmat);
-	//if (K->dBufferMat) clReleaseMemObject(K->dBufferMat);
 	
 	free(K);
-	ref[0] = 0;
-	ref[1] = 0;	
+	//ref[0] = 0;
+	//ref[1] = 0;
+	
+	return R_NilValue;	
 }
 
 
@@ -662,12 +665,15 @@ SEXP cInitOcllips(SEXP NCOLS, SEXP NRHS, SEXP NBUF, SEXP BLOCKSIZE)
 }
 
 
-void cKillOcllips(int *ref)
+SEXP cKillOcllips(SEXP REF)
 {
+	
+	REF = coerceVector(REF,INTSXP);
+	
 	// Construct address
 	addr D;
-	D.II[0] = ref[0];
-	D.II[1] = ref[1];
+	D.II[0] = INTEGER(REF)[0];
+	D.II[1] = INTEGER(REF)[1];
 	
 	cOcllips *K;
 	K = (cOcllips *)D.longValue;
@@ -684,8 +690,10 @@ void cKillOcllips(int *ref)
 	//if (K->dBufferMat_i) clReleaseMemObject(K->dBufferMat_i);
 	
 	free(K);
-	ref[0] = 0;
-	ref[1] = 0;	
+	//ref[0] = 0;
+	//ref[1] = 0;
+	
+	return R_NilValue;	
 }
 
 

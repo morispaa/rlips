@@ -106,13 +106,13 @@ rlips.dispose <- function(e)
 	{
 		if (e$type == 's')
 		{
-			.C("sKillOcllips",
-				as.integer(e$ref),PACKAGE="rlips")
+			.Call("sKillOcllips",
+				e$ref,PACKAGE="rlips")
 		}
 		else if (e$type == 'c')
 		{
-			.C("cKillOcllips",
-				as.integer(e$ref),PACKAGE="rlips")
+			.Call("cKillOcllips",
+				e$ref,PACKAGE="rlips")
 		}
 		else
 		{
