@@ -119,12 +119,12 @@ typedef struct _cocllips
 SEXP sInitOcllips( SEXP, SEXP, SEXP, SEXP);
 SEXP sKillOcllips(SEXP);
 SEXP sRotateOcllips(SEXP, SEXP, SEXP);
-void sGetDataOcllips(int*, double*, int*);
+SEXP sGetDataOcllips(SEXP);
 
 SEXP cInitOcllips(SEXP, SEXP, SEXP, SEXP);
 SEXP cKillOcllips(SEXP);
 SEXP cRotateOcllips(SEXP,SEXP,SEXP,SEXP);
-void cGetDataOcllips(int*, double*, double*, int*);
+SEXP cGetDataOcllips(SEXP);
 
 
 #endif

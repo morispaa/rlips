@@ -437,39 +437,55 @@ SEXP sRotateOcllips(SEXP REF, SEXP DOUBLE_DATABUFFER, SEXP BUFFERROWS)
 
 // GetDataOcllips
 // Fetches R matrix from device and sends it back to R.
-void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
+SEXP sGetDataOcllips(SEXP REF)
 {
+	REF = coerceVector(REF,INTSXP);
+	SEXP DOUBLE_DATABUFFER;
+	//DOUBLE_DATABUFFER = coerceVector(DOUBLE_DATABUFFER,REALSXP);
+	
+	//double *double_dataBuffer = REAL(DOUBLE_DATABUFFER);
+	//DATAROWS = coerceVector(DATAROWS,INTSXP);
+	//int dataRows = INTEGER(DATAROWS)[0];
+	
 	// Construct address
 	addr D;
-	D.II[0] = ref[0];
-	D.II[1] = ref[1];
+	D.II[0] = INTEGER(REF)[0];
+	D.II[1] = INTEGER(REF)[1];
 	
 	sOcllips *K;
 	K = (sOcllips *)D.longValue;
+	
+	
 	
 	cl_int error;
 	
 	float __attribute__ ((aligned (32))) *dataBuffer;
 	dataBuffer = malloc(sizeof(float) * K->sizeRmat);
 	
+	PROTECT(DOUBLE_DATABUFFER = allocVector(REALSXP, K->sizeRmat));
+	
 	// Read dRmat from device to dataBuffer
 	error = clEnqueueReadBuffer(*K->commandqueue,K->dRmat,CL_TRUE,0,sizeof(float) * K->sizeRmat,dataBuffer,0,NULL,NULL);
 	if (error != CL_SUCCESS)
 	{
 		printf("Could not read buffer from device!\n");
-		*dataRows = 0;
-		return;
+		//dataRows = 0;
+		return R_NilValue;
 	}
 	
 	int i;
 	for (i=0 ; i < K->sizeRmat ; i ++)
 	{
-		double_dataBuffer[i] = (double) dataBuffer[i];
+		REAL(DOUBLE_DATABUFFER)[i] = (double) dataBuffer[i];
 	}
 	
 	// Return to R the total number of rows in R matrix.
-	*dataRows = K->numTotRows;
+	//dataRows = K->numTotRows;
 	free(dataBuffer);
+	
+	UNPROTECT(1);
+	
+	return DOUBLE_DATABUFFER;
 }
 
 
@@ -886,12 +902,20 @@ SEXP cRotateOcllips(SEXP REF, SEXP DOUBLE_DATABUFFER_R, SEXP DOUBLE_DATABUFFER_I
 }
 
 
-void cGetDataOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBuffer_i, int *dataRows)
+SEXP cGetDataOcllips(SEXP REF)
 {
+	REF = coerceVector(REF,INTSXP);
+	SEXP DOUBLE_DATABUFFER;
+	
+	//double *double_dataBuffer_r = REAL(DOUBLE_DATABUFFER_R);
+	//double *double_dataBuffer_i = REAL(DOUBLE_DATABUFFER_I);
+	//DATAROWS = coerceVector(DATAROWS,INTSXP);
+	//int dataRows = INTEGER(DATAROWS)[0];
+	
 	// Construct address
 	addr D;
-	D.II[0] = ref[0];
-	D.II[1] = ref[1];
+	D.II[0] = INTEGER(REF)[0];
+	D.II[1] = INTEGER(REF)[1];
 	
 	cOcllips *K;
 	K = (cOcllips *)D.longValue;
@@ -903,25 +927,31 @@ void cGetDataOcllips(int *ref, double *double_dataBuffer_r, double *double_dataB
 	dataBuffer_r = malloc(sizeof(float) * K->sizeRmat);
 	dataBuffer_i = malloc(sizeof(float) * K->sizeRmat);
 	
+	PROTECT(DOUBLE_DATABUFFER = allocVector(REALSXP, K->sizeRmat * 2));
+	
 	// Read dRmat from device to dataBuffer
 	error = clEnqueueReadBuffer(*K->commandqueue,K->dRmat_r,CL_TRUE,0,sizeof(float) * K->sizeRmat,dataBuffer_r,0,NULL,NULL);
 	error = clEnqueueReadBuffer(*K->commandqueue,K->dRmat_i,CL_TRUE,0,sizeof(float) * K->sizeRmat,dataBuffer_i,0,NULL,NULL);
 	if (error != CL_SUCCESS)
 	{
 		printf("Could not read buffer from device!\n");
-		*dataRows = 0;
-		return;
+		//dataRows = 0;
+		return R_NilValue;
 	}
 	
 	int i;
-	for (i=0 ; i < K->sizeRmat ; i ++)
+	for (i=0 ; i < K->sizeRmat ; i++)
 	{
-		double_dataBuffer_r[i] = (double) dataBuffer_r[i];
-		double_dataBuffer_i[i] = (double) dataBuffer_i[i];
+		REAL(DOUBLE_DATABUFFER)[2*i] = (double) dataBuffer_r[i];
+		REAL(DOUBLE_DATABUFFER)[2*i+1] = (double) dataBuffer_i[i];
 	}
 	
 	// Return to R the total number of rows in R matrix.
-	*dataRows = K->numTotRows;
+	//*dataRows = K->numTotRows;
+	
+	UNPROTECT(1);
+	
+	return DOUBLE_DATABUFFER;
 }
 
 

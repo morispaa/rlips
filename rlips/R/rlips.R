@@ -426,21 +426,20 @@ rlips.get.data <- function(e)
 	
 	if (e$type == 's')
 	{
-		res <- .C("sGetDataOcllips",
-				as.integer(e$ref),
-				data = double(e$ncols * e$buffer.cols),
-				data.rows = integer(1),PACKAGE="rlips")
+		data <- .Call("sGetDataOcllips",
+				e$ref,
+				PACKAGE="rlips")
 		#data <- res$data	
-		data.mat <- matrix(res$data,e$ncols,e$buffer.cols,byrow=TRUE)	
+		data.mat <- matrix(data,e$ncols,e$buffer.cols,byrow=TRUE)	
 	}
 	else if (e$type == 'c')
 	{
-		res <- .C("cGetDataOcllips",
-				as.integer(e$ref),
-				data = double(e$ncols * e$buffer.cols),
-				data.i = double(e$ncols * e$buffer.cols),
-				data.rows = integer(1),PACKAGE="rlips")
-		data.mat <- matrix(res$data + 1i*res$data.i,e$ncols,e$buffer.cols,byrow=TRUE)			
+		data <- .Call("cGetDataOcllips",
+				e$ref,
+				PACKAGE="rlips")
+				cat(length(data),'\n')
+		data <- data[seq(1,2 * e$ncols * e$buffer.cols,by=2)] + 1i*data[seq(2,2 * e$ncols * e$buffer.cols,by=2)]
+		data.mat <- matrix(data,e$ncols,e$buffer.cols,byrow=TRUE)			
 	}
 	
 	#tt<-proc.time()
@@ -448,7 +447,7 @@ rlips.get.data <- function(e)
 			
 	e$R.mat <- data.mat[,1:e$ncols]
 	e$Y.mat <- data.mat[,(e$ncols+1):(e$ncols+e$nrhs)]
-	e$ddd.rows <- res$data.rows
+	#e$ddd.rows <- res$data.rows
 	#cat("Matrix manipulation: ",proc.time()-tt,"\n")
 	
 
