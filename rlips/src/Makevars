@@ -4,6 +4,7 @@ PLAT := $(shell uname)
 ifeq ($(PLAT),Darwin)
 PKG_CFLAGS=-DMAC 
 PKG_LIBS=-framework OpenCL
+CC=/usr/bin/gcc
 else
 PKG_CFLAGS=-I/usr/local/cuda/include -DLINUX
 PKG_LIBS=-lOpenCL -DLINUX

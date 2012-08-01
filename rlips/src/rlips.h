@@ -121,9 +121,9 @@ void sKillOcllips(int*);
 SEXP sRotateOcllips(SEXP, SEXP, SEXP);
 void sGetDataOcllips(int*, double*, int*);
 
-void cInitOcllips(int*, int*, int*, int*, int*);
+SEXP cInitOcllips(SEXP, SEXP, SEXP, SEXP);
 void cKillOcllips(int*);
-void cRotateOcllips(int*, double*, double*, int*);
+SEXP cRotateOcllips(SEXP,SEXP,SEXP,SEXP);
 void cGetDataOcllips(int*, double*, double*, int*);
 
 

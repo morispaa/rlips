@@ -473,8 +473,22 @@ void sGetDataOcllips(int *ref, double *double_dataBuffer, int *dataRows)
 // Single precision complex
 
 
-void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
+//void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
+SEXP cInitOcllips(SEXP NCOLS, SEXP NRHS, SEXP NBUF, SEXP BLOCKSIZE)
 {
+
+	SEXP ref;
+	PROTECT(ref = allocVector(INTSXP,2));
+	NCOLS = coerceVector(NCOLS,INTSXP);
+	NRHS = coerceVector(NRHS,INTSXP);
+	NBUF = coerceVector(NBUF,INTSXP);
+	BLOCKSIZE = coerceVector(BLOCKSIZE,INTSXP);
+	//intref = AS_INTEGER(REF);
+	int ncols = INTEGER(NCOLS)[0];
+	int nrhs = INTEGER(NRHS)[0];
+	int nbuf = INTEGER(NBUF)[0];
+	int blocksize = INTEGER(BLOCKSIZE)[0];
+
 	cOcllips *K;
 	
 	// Allocate new sOcllips struct
@@ -490,15 +504,15 @@ void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	K->partRotKernel = malloc(sizeof(cl_kernel));
 	
 	// Set the user provided parameters
-	K->numCols = *ncols;
-	K->numRHS = *nrhs;
-	K->sizeBuffer = *nbuf;
-	K->sizeWorkgroup = *blocksize;
+	K->numCols = ncols;
+	K->numRHS = nrhs;
+	K->sizeBuffer = nbuf;
+	K->sizeWorkgroup = blocksize;
 	
 	// Column size of OpenCL buffers (smallest multiple of workgroup size that
 	// contains both theory matrix columns and measurements)
 	//K->numRmatCols = (*ncols + *nrhs + *blocksize - 1) / *blocksize * *blocksize;
-	K->numRmatCols = (*ncols + *nrhs + 32 - 1) / 32 * 32;
+	K->numRmatCols = (ncols + nrhs + 32 - 1) / 32 * 32;
 	
 	// Numbers whose absolute value is smaller than zThreshold are 
 	// considered as zeroes
@@ -604,12 +618,14 @@ void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 //	printf("Trying to create OpenCL buffers\n");
 	
 	// Create OpenCL buffers
+
+	//printf("K->sizeRmat: %d\n",K->sizeRmat);
 	K->dRmat_r = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeRmat,NULL,&error);
-	K->dRmat_i = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeRmat,NULL,&error);	
+	K->dRmat_i = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeRmat,NULL,&error2);	
 	//K->dBufferMat = clCreateBuffer(*K->context,CL_MEM_READ_WRITE,sizeof(float) * K->sizeBufferMat,NULL,&error2);
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
-		printf("Could not create OpenCL data buffers! Exiting sInitOcllips.\n");
+		printf("Could not create OpenCL data buffers! Error codes: %d, %d. Exiting sInitOcllips.\n",error,error2);
 		if(*K->fullRotKernel) clReleaseKernel(*K->fullRotKernel);
 		if(*K->partRotKernel) clReleaseKernel(*K->partRotKernel);
 		if (*K->kernel_program) clReleaseProgram(*K->kernel_program);
@@ -633,10 +649,15 @@ void cInitOcllips(int *ref, int *ncols, int *nrhs, int *nbuf, int *blocksize)
 	
 	D.longValue = (long)q;
 	
-	ref[0] = D.II[0];
-	ref[1] = D.II[1];
+	//ref[0] = D.II[0];
+	//ref[1] = D.II[1];
 	
-	return;
+	INTEGER(ref)[0] = D.II[0];
+	INTEGER(ref)[1] = D.II[1];
+
+	UNPROTECT(1);
+
+	return(ref);
 	
 }
 
@@ -669,25 +690,38 @@ void cKillOcllips(int *ref)
 
 
 
-void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBuffer_i, int *bufferRows)
+//void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBuffer_i, int *bufferRows)
+SEXP cRotateOcllips(SEXP REF, SEXP DOUBLE_DATABUFFER_R, SEXP DOUBLE_DATABUFFER_I, SEXP BUFFERROWS)
 {
+
+	REF = coerceVector(REF,INTSXP);
+	
+	double *double_dataBuffer_r = REAL(DOUBLE_DATABUFFER_R);
+	double *double_dataBuffer_i = REAL(DOUBLE_DATABUFFER_I);
+	BUFFERROWS = coerceVector(BUFFERROWS,INTSXP);
+	int bufferRows = INTEGER(BUFFERROWS)[0];
+
 	// Construct address
 	addr D;
-	D.II[0] = ref[0];
-	D.II[1] = ref[1];
+	D.II[0] = INTEGER(REF)[0];
+	D.II[1] = INTEGER(REF)[1];
+	// Construct address
+	//addr D;
+	//D.II[0] = ref[0];
+	//D.II[1] = ref[1];
 	
 	cOcllips *K;
 	K = (cOcllips *)D.longValue;
 	
 	// Check that the number of bufferRows does not exceed the device buffer size
-	if (*bufferRows > K->sizeBuffer)
+	if (bufferRows > K->sizeBuffer)
 	{
-		printf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,*bufferRows);
-		return;
+		printf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,bufferRows);
+		return R_NilValue;
 	}
 	
 	// Make sure there is something to rotate
-	if (*bufferRows > 0)
+	if (bufferRows > 0)
 	{
 		int i;
 		cl_int error;
@@ -702,10 +736,10 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		float __attribute__ ((aligned (32))) *dataBuffer_r;
 		float __attribute__ ((aligned (32))) *dataBuffer_i;
 		
-		dataBuffer_r = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
-		dataBuffer_i = malloc(sizeof(float) * *bufferRows * K->numRmatCols);
+		dataBuffer_r = malloc(sizeof(float) * bufferRows * K->numRmatCols);
+		dataBuffer_i = malloc(sizeof(float) * bufferRows * K->numRmatCols);
 		
-		for (i=0 ; i< *bufferRows * K->numRmatCols ; i++)
+		for (i=0 ; i< bufferRows * K->numRmatCols ; i++)
 		{
 			dataBuffer_r[i] = (float) double_dataBuffer_r[i];
 			dataBuffer_i[i] = (float) double_dataBuffer_i[i];
@@ -717,8 +751,8 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		// Move data buffer into device
 		//error = clEnqueueWriteBuffer(*K->commandqueue,K->dBufferMat,CL_FALSE,0,
 		//			sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer,0,NULL,NULL);
-		K->dBufferMat_r = clCreateBuffer(*K->context,CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer_r,&error2); 
-		K->dBufferMat_i = clCreateBuffer(*K->context,CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,sizeof(float) * K->numRmatCols * *bufferRows,dataBuffer_i,&error2); 
+		K->dBufferMat_r = clCreateBuffer(*K->context,CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,sizeof(float) * K->numRmatCols * bufferRows,dataBuffer_r,&error2); 
+		K->dBufferMat_i = clCreateBuffer(*K->context,CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,sizeof(float) * K->numRmatCols * bufferRows,dataBuffer_i,&error2); 
 					
 		// Are there any full rotations to be made?
 		if (K->numRmatRows > 0)
@@ -726,7 +760,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			// Is R matrix already full?
 			if (K->numRmatRows >= K->numCols)
 			{
-				rowsToRotate = * bufferRows;
+				rowsToRotate = bufferRows;
 				//numColumns = K->numRmatCols;
 				numColumns = K->numCols;
 				fRow = 0;
@@ -737,10 +771,10 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			
 			}
 			// else: will R matrix become full with this buffer?
-			else if (K->numRmatRows + *bufferRows > K->numCols)
+			else if (K->numRmatRows + bufferRows > K->numCols)
 			{	
 				numRows1 = K->numCols - K->numRmatRows;
-				numRows2 = *bufferRows - numRows1;
+				numRows2 = bufferRows - numRows1;
 				
 				rowsToRotate = numRows1;
 				numColumns = K->numRmatRows;
@@ -771,7 +805,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			// else: first do normal full rotations and then partial rotations
 			else
 			{
-				rowsToRotate = *bufferRows;
+				rowsToRotate = bufferRows;
 				numColumns = K->numRmatRows;
 				fRow = 0;
 				fCol = 0;
@@ -780,8 +814,8 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 				cFullRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
 				//clFinish(*K->commandqueue);
-				rowsToRotate = *bufferRows;
-				numColumns = *bufferRows;
+				rowsToRotate = bufferRows;
+				numColumns = bufferRows;
 				fRow = 0;
 				fCol = K->numRmatRows;
 				
@@ -793,7 +827,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		// else: do just partial rotations. This is only done if R matrix is empty
 		else
 		{
-			if (*bufferRows > K->numCols)
+			if (bufferRows > K->numCols)
 			{
 				rowsToRotate = K->numCols;
 				numColumns = K->numCols;
@@ -803,7 +837,7 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 				//#include "rot_partial.inc"
 				cPartialRotations(K,rowsToRotate,numColumns,fRow,fCol);
 				
-				rowsToRotate = *bufferRows - K->numCols;
+				rowsToRotate = bufferRows - K->numCols;
 				numColumns = K->numCols;
 				fRow = K->numCols;
 				fCol = 0;
@@ -815,8 +849,8 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 			}
 			else
 			{
-				rowsToRotate = *bufferRows;
-				numColumns = *bufferRows;
+				rowsToRotate = bufferRows;
+				numColumns = bufferRows;
 				fRow = 0;
 				fCol = K->numRmatRows;
 			
@@ -827,15 +861,17 @@ void cRotateOcllips(int *ref, double *double_dataBuffer_r, double *double_dataBu
 		}
 		
 		// Update internal parameters
-		K->numTotRows += *bufferRows;
-		K->numRmatRows += *bufferRows;
+		K->numTotRows += bufferRows;
+		K->numRmatRows += bufferRows;
 		if (K->numRmatRows > K->numCols) K->numRmatRows = K->numCols;
 		
 		free(dataBuffer_r);
 		free(dataBuffer_i);
 		clReleaseMemObject(K->dBufferMat_r);
 		clReleaseMemObject(K->dBufferMat_i);
-		
+
+
+		return R_NilValue;
 		
 		
 	}
