@@ -126,5 +126,7 @@ SEXP cKillOcllips(SEXP);
 SEXP cRotateOcllips(SEXP,SEXP,SEXP,SEXP);
 SEXP cGetDataOcllips(SEXP);
 
+SEXP cbacksolve(SEXP,SEXP);
+
 
 #endif

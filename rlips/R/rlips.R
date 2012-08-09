@@ -100,10 +100,15 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 
 
 ## dispose RLIPS object
+## Arguments:
+##  e		rlips environment
 rlips.dispose <- function(e)
 {
+	# Check that e actually is an active rlips environment
 	if (e$active)
 	{
+		# Depending on the type of the environment call the proper
+		# C routine which deallocates memory and tidies things up.
 		if (e$type == 's')
 		{
 			.Call("sKillOcllips",
@@ -116,15 +121,16 @@ rlips.dispose <- function(e)
 		}
 		else
 		{
-			stop('rlips.dispose: type not recognized!')
+			stop('rlips.dispose: type not recognized! Nothing done!')
 		}
+		
+		# Flag environment as inactive.
+		e$active <- FALSE	
 	}
 	else
 	{
-		cat('Warning rlips.dispose: not an active RLIPS environment!\n','Nothing done!\n',sep='')
+		stop('rlips.dispose: Not an active RLIPS environment! Nothing done!')
 	}
-	
-	e$active <- FALSE	
 }
 
 
@@ -375,6 +381,7 @@ rlips.solve <- function(e,calculate.covariance=FALSE,full.covariance=FALSE)
     }
     else if (e$type == 'c')
     {
+    	# this needs quickly a proper back substitution algorithm!
     	e$solution <- solve(e$R.mat,e$Y.mat)
     }
     
@@ -454,6 +461,17 @@ rlips.get.data <- function(e)
 
 }
 ## 
+
+
+bsolve.test <- function(R,Y)
+{
+	res <- .Call("cbacksolve",
+				R,
+				Y,
+				PACKAGE="rlips")
+	
+	return(res)
+}
 
 
 rlips.test <- function(type,size,buffersize = size[2],loop=1,wg.size=128,return.data=FALSE,averaging.fun=mean)
