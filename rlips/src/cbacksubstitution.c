@@ -46,23 +46,27 @@ SEXP cbacksolve(SEXP R, SEXP Y)
 	
 	//double *tmp = malloc(J * sizeof(double));
 	
-	double Ur,Ui;
+	double Ur,Ui,tmp;
 	
 	for (i = I - 1 ; i >= 1; i--)
 	{
 		Ur = rr[i + i * I].r;
 		Ui = rr[i + i * I].i;
+		//Ur = rr[i][i].r;
+		//Ui = rr[i][i].i;
 		
 		for (k = 0 ; k < J ; k++)
 		{
+			tmp = COMPLEX(res)[i + k * I].r;
 			COMPLEX(res)[i + k * I].r = (CPLX_MULT_R(
 								COMPLEX(res)[i + k * I].r,
 								COMPLEX(res)[i + k * I].i,
 								Ur,
 								-Ui
 								))/(Ur*Ur + Ui*Ui);
+								
 			COMPLEX(res)[i + k * I].i =	(CPLX_MULT_I(
-								COMPLEX(res)[i + k * I].r,
+								tmp,
 								COMPLEX(res)[i + k * I].i,
 								Ur,
 								-Ui
@@ -94,6 +98,7 @@ SEXP cbacksolve(SEXP R, SEXP Y)
 	
 	for (k = 0; k < J ; k++)
 	{
+		tmp = COMPLEX(res)[k * I].r;
 		COMPLEX(res)[k * I].r = (CPLX_MULT_R(
 							COMPLEX(res)[k * I].r,
 							COMPLEX(res)[k * I].i,
@@ -102,7 +107,7 @@ SEXP cbacksolve(SEXP R, SEXP Y)
 							))/(rr[0].r * rr[0].r + rr[0].i * rr[0].i);
 		
 		COMPLEX(res)[k * I].i = (CPLX_MULT_I(
-							COMPLEX(res)[k * I].r,
+							tmp,
 							COMPLEX(res)[k * I].i,
 							rr[0].r,
 							-rr[0].i

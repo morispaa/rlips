@@ -381,8 +381,12 @@ rlips.solve <- function(e,calculate.covariance=FALSE,full.covariance=FALSE)
     }
     else if (e$type == 'c')
     {
-    	# this needs quickly a proper back substitution algorithm!
-    	e$solution <- solve(e$R.mat,e$Y.mat)
+    	
+    	#e$solution <- solve(e$R.mat,e$Y.mat)
+    	e$solution <- .Call("cbacksolve",
+    						e$R.mat,
+    						e$Y.mat,
+    						PACKAGE="rlips")
     }
     
     if (calculate.covariance)
@@ -396,6 +400,9 @@ rlips.solve <- function(e,calculate.covariance=FALSE,full.covariance=FALSE)
       		}
       		else if (e$type == 'c')
       		{
+      			# Here we use solve instead of complex backsolve
+      			# becouse it is not optimised for such a large measurement
+      			# vectors
       			e$covariance <- solve(e$R.mat,diag(rep(1,e$ncols)))
       			e$covariance <- e$covariance %*% Conj(t(e$covariance))
       		}
@@ -444,7 +451,7 @@ rlips.get.data <- function(e)
 		data <- .Call("cGetDataOcllips",
 				e$ref,
 				PACKAGE="rlips")
-				cat(length(data),'\n')
+				#cat(length(data),'\n')
 		data <- data[seq(1,2 * e$ncols * e$buffer.cols,by=2)] + 1i*data[seq(2,2 * e$ncols * e$buffer.cols,by=2)]
 		data.mat <- matrix(data,e$ncols,e$buffer.cols,byrow=TRUE)			
 	}
@@ -453,7 +460,9 @@ rlips.get.data <- function(e)
 	#data.mat <- matrix(data,e$ncols,e$buffer.cols,byrow=TRUE)
 			
 	e$R.mat <- data.mat[,1:e$ncols]
+	dim(e$R.mat)<-c(e$ncols,e$ncols)
 	e$Y.mat <- data.mat[,(e$ncols+1):(e$ncols+e$nrhs)]
+	dim(e$Y.mat)<-c(e$ncols,e$nrhs)
 	#e$ddd.rows <- res$data.rows
 	#cat("Matrix manipulation: ",proc.time()-tt,"\n")
 	
@@ -510,7 +519,7 @@ rlips.test <- function(type,size,buffersize = size[2],loop=1,wg.size=128,return.
 	
 	if (return.data)
 	{
-		return(list(times=a.time,accuracy=a.acc,Gflops=Gflops,R=ss$R,Y=ss$Y))
+		return(list(times=a.time,accuracy=a.acc,Gflops=Gflops,R=ss$R,Y=ss$Y,sol=sol))
 	}
 	else
 	{
