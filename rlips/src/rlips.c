@@ -1,4 +1,4 @@
-//file: rlips.h
+//file: rlips.c
 
 // R Linear Inverse Problem Solver
 // Version 0.5

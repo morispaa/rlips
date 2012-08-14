@@ -1,7 +1,6 @@
 //file: ocllips.h
 
-// OpenCL-LIPS data types, structs, function protorypes
-// and OpenCL kernel source code
+// RLIPS data types, structs, function protorypes
 
 // (c) 2011- University of Oulu, Finland
 // Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
@@ -32,22 +31,25 @@ typedef union _split_t
 } addr;
 
 
+// RLIPS data structures
+
 // Single precision real
 typedef struct _socllips
 {	
-	// User given parameters in lips_init
+	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
 	int numRHS;  // Number of right hand sides, i.e. number of columns in the measurement
 	int sizeBuffer;  // Number of rows in the rotation buffer
 	int sizeWorkgroup; // OpenCL workgroup size (should be of form 2^n)
 	
-	float zThreshold; // Threshold value for zero. This could also be user given parameter
-	
-	// Internal changing parameters
-	int numTotRows; // Number of data rows fed into problem
-	int numRmatRows; // Number of rows in the target matrix
+
+	// Internal parameters
+	float zThreshold; // Threshold value for zero. This could also be user given parameter,
+					  // but is not at the moment.
+	int numTotRows; // Total number of data rows fed into problem
+	int numRmatRows; // Number of rows currently in the target matrix
 	int numBufferRows; // Number of data rows currently in the rotation buffer
-	long flops; // Number of floating point operations made		
+	long flops; // Number of floating point operations made	(NOT USED)	
 	
 	// Constant parameters depending on user given parameters
 	int numRmatCols; // number of columns in the R matrix
@@ -72,20 +74,22 @@ typedef struct _socllips
 
 typedef struct _cocllips
 {	
-	// User given parameters in lips_init
+	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
 	int numRHS;  // Number of right hand sides, i.e. number of columns in the measurement
 	int sizeBuffer;  // Number of rows in the rotation buffer
 	int sizeWorkgroup; // OpenCL workgroup size (should be of form 2^n)
 	
-	float zThreshold; // Threshold value for zero. This could also be user given parameter
+
 	
-	// Internal changing parameters
+	// Internal parameters
+	float zThreshold; // Threshold value for zero. This could also be user given parameter,
+					  // but is not at the moment.
 	int numTotRows; // Number of data rows fed into problem
-	int numRmatRows; // Number of rows in the target matrix
+	int numRmatRows; // Number of rows currently in the target matrix
 	int numBufferRows; // Number of data rows currently in the rotation buffer
-	long flops; // Number of floating point operations made		
-	
+	long flops; // Number of floating point operations made	(NOT USED)
+		
 	// Constant parameters depending on user given parameters
 	int numRmatCols; // number of columns in the R matrix
 	int sizeRmat; // Total size (cols x rows) of R matrix
