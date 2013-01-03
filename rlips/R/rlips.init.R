@@ -21,8 +21,8 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 	e <- new.env()
 	
 	# Set problem parameters. 
-	# e$ref holds two integers that are used to form the C pointer for this
-	# problem.
+	# e$ref holds an integer vector of length 2 used to form the C pointer for this
+	# particular problem instance.
 	e$ref <- c(0,0)
 	e$ncols <- ncols
 	e$nrhs <- nrhs
@@ -66,7 +66,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 	# See file rlips.c
 	if (e$type == 's')
 	{
-		e$ref = .Call("sInitOcllips",
+		e$ref = .Call("sInitRlips",
 			ncols,
 			nrhs,
 			e$nbuf,
@@ -75,7 +75,7 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 	}
 	else if (type == 'c')
 	{
-		e$ref = .Call("cInitOcllips",
+		e$ref = .Call("cInitRlips",
 			ncols,
 			nrhs,
 			e$nbuf,
@@ -91,7 +91,8 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 	# We need this to ensure that we do not reallocate allocated objects
 	# or deallocate already deallocated objects. Doing so would cause R to crash.
 	e$active <-TRUE
-	
+
+	# Return the RLIPS environment	
 	return(e)
 }
 

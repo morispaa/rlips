@@ -16,12 +16,12 @@ rlips.dispose <- function(e)
 		# C routine which deallocates memory and tidies things up.
 		if (e$type == 's')
 		{
-			.Call("sKillOcllips",
+			.Call("sKillRlips",
 				e$ref,PACKAGE="rlips")
 		}
 		else if (e$type == 'c')
 		{
-			.Call("cKillOcllips",
+			.Call("cKillRlips",
 				e$ref,PACKAGE="rlips")
 		}
 		else

@@ -1,19 +1,12 @@
-#ifndef ROT_FULL_H
-#define ROT_FULL_H
+#ifndef __ROTATIONS_H
+#define __ROTATIONS_H
 
 #include "rlips.h"
 
-void sFullRotations(sOcllips *, int, int, int, int);
-void sPartialRotations(sOcllips *, int, int, int, int);
+void sFullRotations(sRlips *, int, int, int, int);
+void sPartialRotations(sRlips *, int, int, int, int);
 
-void cFullRotations(cOcllips *, int, int, int, int);
-void cPartialRotations(cOcllips *, int, int, int, int);
-
-
-
-
-
-
-
+void cFullRotations(cRlips *, int, int, int, int);
+void cPartialRotations(cRlips *, int, int, int, int);
 
 #endif

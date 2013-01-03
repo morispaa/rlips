@@ -5,18 +5,26 @@
 
 
 
-## Add data 
+## Add data to RLIPS problem
+## Arguments:
+##
+##	e		Initialized rlips environment
+##	A.data	Theory matrix data. Given as a matrix OR as a vector (row-major format)
+##	M.data	Measurement matrix data. Given as a matrix OR as a row-major vector
+##	E.data	Measurement error covariance matrix, OR vector giving error variances OR
+##			single number giving constant error variance for all measurements.
+##			Default is E.data==1, i.e. errors do not have any effect to the result. 
 rlips.add <- function(e,A.data,M.data,E.data=1)
-{
+{ 
+	# Make sure that we are using an active environment
+	if (!e$active)
+	{
+		stop("Not an active rlips environment! Nothing done!")
+	}
   
-  #ttt <- proc.time()
-  # Make sure that we are using an active environment
-  if (!e$active)
-  {
-    stop("Not an active rlips environment! Nothing done!")
-  }
-  
-  ## Is error given as a matrix
+	## Check that the arguments are in right form
+	
+	## Is error given as a matrix
 	if (is.matrix(E.data))
 	{
 		Emat=TRUE
@@ -26,22 +34,26 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		Emat=FALSE
 	}
 	
-	## theory matrix
+	## Check given theory matrix data
+
 	if (is.vector(A.data))
+	## If given as a vector check that its length is a multiple of e$ncols 	
 	{
 		if (length(A.data)/e$ncols != as.integer(length(A.data)/e$ncols))
 		{
 			stop('rlips.add: theory matrix has wrong size!')
 		}
 		else
+		## Calculate the number of matrix rows fed in
 		{
 			num.rows <- length(A.data)/e$ncols
 		}
 		
-		## Reshape into a matrix
-		A.data <- t(matrix(A.data,e$ncols,num.rows))
+		## Reshape vector into a matrix
+		A.data <- matrix(A.data,e$ncols,num.rows,byrow=T)
 	}	
 	else
+	## Theory matrix data given as a matrix. Check number of columns.
 	{
 		if (ncol(A.data) != e$ncols)
 		{
@@ -53,10 +65,10 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		}
 	}
 	
-	## measurement
+	## Check given measurement matrix
 
-	
 	if (is.vector(M.data))
+	## If given as a vector, check that its length is right (given the rows in A.data)
 	{
 		if (length(M.data) != e$nrhs * num.rows)
 		{
@@ -65,10 +77,11 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		else
 		{
 			## reshape as matrix
-			M.data <- t(matrix(M.data,e$nrhs,num.rows))
+			M.data <- matrix(M.data,e$nrhs,num.rows,by.row=T)
 		}
 	}
 	else
+	## If given as a matrix, check its dimensions
 	{
 		if (!all(c(num.rows,e$nrhs)==dim(M.data)))
 		{
@@ -77,102 +90,49 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 	}
 	
 
+	## Check given error data
 	
-	## error
 	if (Emat)
+	## If errors are given as a covariance matrix, check its dimensions.
+	## NB: Positive definitiveness or symmetricity is not checked!
 	{
 		if (!all(c(num.rows,num.rows)==dim(E.data)))
 		{
 			stop('rlips.add: error covariance matrix has wrong size!')
 		}
-		else
-		{
-			C <- chol(E.data)
-			A.data <- backsolve(C,A.data,transpose=T)
-			M.data <- backsolve(C,M.data,transpose=T)
-			E.data <- rep(1.0,num.rows)	
-		}	
+
+		## Multiply theory matrix and measurement data with the inverse of
+		## the Cholesky factor of the error covariance matrix
+		## (Whitening of the noise)
+		C <- chol(E.data)
+		A.data <- backsolve(C,A.data,transpose=T)
+		M.data <- backsolve(C,M.data,transpose=T)
+		
 	}
 	else
+	## Errors given as a vector or a scalar value
 	{
 		if (length(E.data)==1)
+		## If error variance is given as a single number, expand it to a vector.
 		{
 			E.data <- rep(E.data,num.rows)
 		}
 		else
+		## if given as a vector, check its length.
 		{
 			if ( length(E.data) != num.rows)
 			{
 				stop('rlips.add: error vector has wrong length!')
 			}
 		}
+		
+		## Divide both theory matrix rows and measurements by the square root of
+		## the inverse of the variance (whitening the noise)
+		A.data <- diag(1/sqrt(E.data)) %*% A.data
+		M.data <- diag(1/sqrt(E.data)) %*% M.data
 	}
   
-  
-  
-#	# Make sure all data are matrices
-#	A.data <-as.matrix(A.data)
-#	M.data <-as.matrix(M.data)
-#	E.data <-as.matrix(E.data)
-#	
-#	# Data dimensions & check
-#	A.dim <- dim(A.data)
-#	M.dim <- dim(M.data)
-#	E.dim <- dim(E.data)
-#	
-#	data.rows <- A.dim[1]
-#	
-#	# Check dims of A
-#	if (A.dim[2] != e$ncols)
-#	{
-#		stop('Error in rlips.add: A.data has wrong number of columns!')
-#	}
-#	
-#	# Check dims of M
-#	if (all(M.dim != c(data.rows,e$nrhs)))
-#	{
-#		stop('Error in rlips.add: M.data has wrong size!')
-#	}
-#	
-#	## cat(all(E.dim==c(1,1)),'\n')
-#	
-#	# Check dims of E and get rid of it.
-#	# It can be either single scalar, vector or matrix
-#	if (all(E.dim == c(1,1)))
-#	{
-#		# Single scalar error variance
-#		if (E.data != 1)
-#		{
-#			err <- 1/sqrt(as.vector(E.data))
-#			A.data <- as.vector(err) * A.data
-#			M.data <- as.vector(err) * M.data
-#		}
-#	}
-#	else if (all(E.dim == c(data.rows,1)))
-#	{
-#		# Error variances given as vector, i.e., diagonal of
-#		# error covariance matrix
-#		err <- 1/sqrt(err)
-#		A.data <- diag(as.vector(err)) %*% A.data
-#		M.data <- as.vector(err) * M.data
-#	}
-#	else if (all(E.dim == c(data.rows,data.rows)))
-#	{
-#		# Full error covariance matrix
-#		C <- chol(E.data)
-#		A.data <- backsolve(C,A.data,transpose=T)
-#		M.data <- backsolve(C,M.data,transpose=T)
-#	}
-#	else
-#	{
-#		stop('Error in rlips.add: E.data has wrong size!')
-#	}
-	
-	#cat("rotation init: ",proc.time()-ttt,"\n")	
-    
-
-
-	# Move data to buffer
+	## Move data to buffer row by row
 	for (i in seq(num.rows))
 	{
 		e$buffer[e$brows+1,1:e$ncols] <- A.data[i,]

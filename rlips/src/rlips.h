@@ -1,13 +1,13 @@
-//file: ocllips.h
+//file: rlips.h
 
-// RLIPS data types, structs, function protorypes
+// RLIPS C data types, structs, function prototypes
 
 // (c) 2011- University of Oulu, Finland
 // Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
 // Licensed under FreeBSD license. See file LICENSE for details.
 
-#ifndef __OCLLIPS_H
-#define __OCLLIPS_H
+#ifndef __RLIPS_H
+#define __RLIPS_H
 
 #include<R.h>
 #include<Rinternals.h>
@@ -19,7 +19,7 @@
 #endif
 
 // *************************************
-// ***   ocllips structures          ***
+// ***   Rlips structures          ***
 // *************************************
 
 
@@ -34,7 +34,7 @@ typedef union _split_t
 // RLIPS data structures
 
 // Single precision real
-typedef struct _socllips
+typedef struct _sRlips
 {	
 	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
@@ -69,10 +69,10 @@ typedef struct _socllips
 	
 	cl_kernel* fullRotKernel;
 	cl_kernel* partRotKernel;
-} sOcllips;
+} sRlips;
 
 
-typedef struct _cocllips
+typedef struct _cRlips
 {	
 	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
@@ -110,7 +110,7 @@ typedef struct _cocllips
 	
 	cl_kernel* fullRotKernel;
 	cl_kernel* partRotKernel;
-} cOcllips;
+} cRlips;
 
 
 
@@ -118,17 +118,17 @@ typedef struct _cocllips
 
 
 // ***************************************
-// ***   ocllips function prototypes   ***
+// ***   Rlips function prototypes   ***
 // ***************************************
-SEXP sInitOcllips( SEXP, SEXP, SEXP, SEXP);
-SEXP sKillOcllips(SEXP);
-SEXP sRotateOcllips(SEXP, SEXP, SEXP);
-SEXP sGetDataOcllips(SEXP);
+SEXP sInitRlips( SEXP, SEXP, SEXP, SEXP);
+SEXP sKillRlips(SEXP);
+SEXP sRotateRlips(SEXP, SEXP, SEXP);
+SEXP sGetDataRlips(SEXP);
 
-SEXP cInitOcllips(SEXP, SEXP, SEXP, SEXP);
-SEXP cKillOcllips(SEXP);
-SEXP cRotateOcllips(SEXP,SEXP,SEXP,SEXP);
-SEXP cGetDataOcllips(SEXP);
+SEXP cInitRlips(SEXP, SEXP, SEXP, SEXP);
+SEXP cKillRlips(SEXP);
+SEXP cRotateRlips(SEXP,SEXP,SEXP,SEXP);
+SEXP cGetDataRlips(SEXP);
 
 SEXP cbacksolve(SEXP,SEXP);
 

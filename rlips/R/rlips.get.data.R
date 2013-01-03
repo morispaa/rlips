@@ -12,7 +12,7 @@ rlips.get.data <- function(e)
 	
 	if (e$type == 's')
 	{
-		data <- .Call("sGetDataOcllips",
+		data <- .Call("sGetDataRlips",
 				e$ref,
 				PACKAGE="rlips")
 		#data <- res$data	
@@ -20,7 +20,7 @@ rlips.get.data <- function(e)
 	}
 	else if (e$type == 'c')
 	{
-		data <- .Call("cGetDataOcllips",
+		data <- .Call("cGetDataRlips",
 				e$ref,
 				PACKAGE="rlips")
 				#cat(length(data),'\n')

@@ -6,45 +6,47 @@
 
 
 ## Do the rotations
+##
+##	Arguments:
+##		e		Active RLIPS environmet
 rlips.rotate <- function(e)
 {
-	#cat("Going to rotate ",e$brows," buffer rows\n",sep="")
-
-  #if (e$brows > e$nbuf)
-  #{
-  #  stop("Something fishy going on? Environment should not have this many buffer rows at this point! Doin' nuthin'!")
-  #}
-	if (e$brows > 0)
+	# Make sure that we are using an active environment
+	if (!e$active)
 	{
-		#rlips.data <- matrix(t(e$buffer[1:e$brows,]),e$brows*e$buffer.cols)
-  	
-    	## rotate first nbuf rows
-    	if (e$type == 's')
-    	{
-    		.Call("sRotateOcllips",
-    			e$ref,
-    			t(e$buffer[1:e$brows,]),
-    			e$brows,
-    			PACKAGE="rlips")
-    	}
-    	else if (e$type == 'c')
-    	{
-    		.Call("cRotateOcllips",
-    			e$ref,
-    			#Re(rlips.data),
-    			#Im(rlips.data),
+		stop("Not an active rlips environment! Nothing done!")
+	}
+	
+	## Rotate only, if there is something to rotate
+	if (e$brows > 0)
+	{  	
+		## Depending on e$type, use the right C routine <s|c>RotateRlips
+		## Notice that the buffer is transposed, because R stores matrices in
+		## column-major order and C in row-major order.
+		if (e$type == 's')
+		{
+			.Call("sRotateRlips",
+				e$ref,
+				t(e$buffer[1:e$brows,]),
+				e$brows,
+				PACKAGE="rlips")
+		}
+		else if (e$type == 'c')
+		{
+			.Call("cRotateRlips",
+				e$ref,
 				Re(t(e$buffer[1:e$brows,])),
 				Im(t(e$buffer[1:e$brows,])),
-    			e$brows,
+				e$brows,
 				PACKAGE="rlips")
-    	}
-    	
-    	e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
-    	e$nrows <- e$nrows + e$browse.pkgs
-    	e$rrows <- min(e$ncols,e$nrows)
-    	e$brows <- 0
-    	
+		}
+		
+		## After rotations, update internal variables and zero out the buffer matrix.
+		e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
+		e$nrows <- e$nrows + e$brows
+		e$rrows <- min(e$ncols,e$nrows)
+		e$brows <- 0	
 	}
-
-
 }
+
+

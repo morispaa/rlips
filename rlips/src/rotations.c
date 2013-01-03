@@ -1,6 +1,6 @@
 //file: rot_full.c
 
-// ocllips internal functions for full rotations
+// Rlips internal functions for full rotations
 
 
 // (c) 2011- University of Oulu, Finland
@@ -21,7 +21,7 @@
 
 
 
-void sFullRotations(sOcllips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+void sFullRotations(sRlips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
 {
 	
 	// Calculate rotation parameters
@@ -91,7 +91,7 @@ void sFullRotations(sOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 }
 
 
-void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+void cFullRotations(cRlips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
 {
 	// Calculate rotation parameters
 	// Stages
@@ -164,7 +164,7 @@ void cFullRotations(cOcllips *K, int rowsToRotate, int numColumns, int fRow, int
 
 
 
-void sPartialRotations(sOcllips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+void sPartialRotations(sRlips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
 {
 
 	int err1, n;
@@ -244,7 +244,7 @@ void sPartialRotations(sOcllips  *K, int rowsToRotate, int numColumns, int fRow,
 
 
 
-void cPartialRotations(cOcllips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+void cPartialRotations(cRlips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
 {
 	int err1,n;
 	// Calculate rotation parameters
