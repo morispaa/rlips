@@ -17,12 +17,14 @@ rlips.rotate <- function(e)
 		stop("Not an active rlips environment! Nothing done!")
 	}
 	
-	## Rotate only, if there is something to rotate
+	# Rotate only, if there is something to rotate
 	if (e$brows > 0)
 	{  	
-		## Depending on e$type, use the right C routine <s|c>RotateRlips
-		## Notice that the buffer is transposed, because R stores matrices in
-		## column-major order and C in row-major order.
+		# Depending on e$type, use the right C routine 
+		# <s|c>RotateRlips
+		# Notice that the buffer is transposed, because 
+		# R stores matrices in column-major order and 
+		# C in row-major order.
 		if (e$type == 's')
 		{
 			.Call("sRotateRlips",
@@ -35,13 +37,16 @@ rlips.rotate <- function(e)
 		{
 			.Call("cRotateRlips",
 				e$ref,
+				# Complex data is separated into real and
+				# imaginary parts
 				Re(t(e$buffer[1:e$brows,])),
 				Im(t(e$buffer[1:e$brows,])),
 				e$brows,
 				PACKAGE="rlips")
 		}
 		
-		## After rotations, update internal variables and zero out the buffer matrix.
+		# After rotations, update internal variables and 
+		# empty the buffer matrix.
 		e$buffer <- matrix(0,e$nbuf,e$buffer.cols)
 		e$nrows <- e$nrows + e$brows
 		e$rrows <- min(e$ncols,e$nrows)

@@ -1,6 +1,6 @@
 Package: rlips
-Version: 0.5-1
-Date: 2012-01-26
+Version: 0.5-2
+Date: 2013-01-03
 Title: R Linear Inverse Problem Solver
 Author@R: c(person("Mikko","Orispää",email="mikko.orispaa@oulu.fi"))
 Author: Mikko Orispää <mikko.orispaa@oulu.fi>

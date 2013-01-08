@@ -9,6 +9,12 @@
 
 rlips.solve <- function(e,calculate.covariance=FALSE,full.covariance=FALSE)
 {
+	# Make sure that we are using an active environment
+	if (!e$active)
+	{
+		stop("Not an active rlips environment! Nothing done!")
+	}
+	
 	if (e$brows > 1) rlips.rotate(e)
 	
 	if (e$active)

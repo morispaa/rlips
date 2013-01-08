@@ -1,3 +1,5 @@
+useDynLib(rlips)
+
 export(rlips.init,
 	   rlips.dispose,
 	   rlips.add,

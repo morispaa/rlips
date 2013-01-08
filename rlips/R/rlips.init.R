@@ -3,32 +3,33 @@
 ## Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
 ## Licensed under FreeBSD license. See file LICENSE for details.
 
-
-
-
 ## Initialize RLIPS object
 ## Arguments:
 ##	ncols		number of unknowns/columns in the theory matrix
-##	nrhs		number of measurements/columns in the measurement vector/matrix
+##	nrhs		number of measurements/columns in the 
+##				measurement vector/matrix
 ##	type		problem type; 's' for single precision real, 
 ##				'c' for single precision complex
 ##	nbuf		data buffer rows
 ##	workgroup.size
-##				OpenCL workgroup size, best choice depends on the used GPU
+##				OpenCL workgroup size, best choice depends 
+##				on the used GPU
 rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128) 
 {
 	# Create new environment for the problem data
 	e <- new.env()
 	
 	# Set problem parameters. 
-	# e$ref holds an integer vector of length 2 used to form the C pointer for this
+	# e$ref holds an integer vector of length 2 used 
+	# to form the C pointer for this
 	# particular problem instance.
 	e$ref <- c(0,0)
 	e$ncols <- ncols
 	e$nrhs <- nrhs
     e$nbuf <- nbuf  
 
-	# Check workgroup size. Usually, it should be a multiple of 16. The optimal
+	# Check workgroup size. Usually, it should be 
+	# a multiple of 16. The optimal
 	# size depends on the used GPU.
 	if (workgroup.size%%16 != 0)
 	{
@@ -38,9 +39,9 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 
 	e$type <- type
 	
-	# Check type parameter. At this point, only single precision real and
-	# complex problems are implemented. Also, only high-end GPU's are capable
-	# to use double precision.	
+	# Check type parameter. At this point, only single precision 
+	# real and complex problems are implemented. Also, only 
+	# high-end GPU's are capable to use double precision.	
 	if (type != 's' && type != 'c')
 	{
 		stop('Only single precission real and complex types implemented! Exiting!')
@@ -54,7 +55,6 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
 	# Number of columns in the buffer matrix.
 	# Holds both data and measurements and is a multiple of
 	# workgroup size.
-	#e$buffer.cols <- floor((ncols + nrhs + e$wg.size - 1)/e$wg.size) * e$wg.size  
 	e$buffer.cols <- floor((ncols + nrhs + 32 - 1)/32) * 32  
                                                                                                
                                                                                               
@@ -88,8 +88,9 @@ rlips.init <- function(ncols,nrhs,type='s',nbuf=ncols,workgroup.size=128)
  	}
 
 	# Flag current RLIPS environment as active.
-	# We need this to ensure that we do not reallocate allocated objects
-	# or deallocate already deallocated objects. Doing so would cause R to crash.
+	# We need this to ensure that we do not reallocate 
+	# allocated objects or deallocate already deallocated 
+	# objects. Doing so would cause R to crash.
 	e$active <-TRUE
 
 	# Return the RLIPS environment	
