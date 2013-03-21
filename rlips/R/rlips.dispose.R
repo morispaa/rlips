@@ -12,8 +12,9 @@ rlips.dispose <- function(e)
 	# Check that e actually is an active rlips environment
 	if (e$active)
 	{
-		# Depending on the type of the environment call the proper
-		# C routine which deallocates memory and tidies things up.
+		# Depending on the type of the environment call 
+		# the proper C routine which deallocates memory 
+		# and tidies things up.
 		if (e$type == 's')
 		{
 			.Call("sKillRlips",
@@ -29,7 +30,7 @@ rlips.dispose <- function(e)
 			stop('rlips.dispose: type not recognized! Nothing done!')
 		}
 		
-		# Flag environment as inactive.
+		# Set the rlips environment e inactive.
 		e$active <- FALSE	
 	}
 	else

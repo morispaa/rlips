@@ -5,3 +5,5 @@
 .Rdata
 .Rhistory
 *.tar.gz
+*.rds
+

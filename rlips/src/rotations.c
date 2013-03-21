@@ -11,31 +11,55 @@
 #include<stdio.h>
 
 
-
+// Create index for upper triangular matrix
+// stored in row-major order
+// A row
+// B column
+// C number of columns in matrix
 #define ridx(A,B,C) ((B)+(A)*(2*(C)-(A)-1)/2)
+
+// Create index for rectangular matrix
+// stored in row-major order
+// A row
+// B column
+// C number of columns in matrix
 #define yidx(A,B,C) ((A)*(C)+(B))
 
+// Standard definitions for min and max
 #define min(A,B) (((A)<=(B))?(A):(B))
 #define max(A,B) (((A)>(B))?(A):(B))
 
 
 
+/*
+sFullRotations
+=============
 
-void sFullRotations(sRlips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+Performs full rotations for between target
+and buffer matrices
+
+Arguments:
+
+	K				Real RLIPS structure
+	rowsToRotate	Number of rows to be rotated
+	numColumns		Number of columns to be rotated
+	fRow			First row to be rotated
+	fCol			First column to be rotated
+*/
+void sFullRotations(sRlips *K, int rowsToRotate, int numColumns,
+					int fRow, int fCol)
 {
 	
 	// Calculate rotation parameters
 	// Stages
 	int totalStages = rowsToRotate + numColumns - 1;
 	
-	//printf("\tFull rotations, Total Stages: %d\n",totalStages);
-	
-
 	// Loop through stages
 	int stage;
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
+		// in this stage
 		int nn;
 		if (rowsToRotate > numColumns)
 		{
@@ -47,15 +71,18 @@ void sFullRotations(sRlips *K, int rowsToRotate, int numColumns, int fRow, int f
 		}
 		int numRotations;
 		numRotations = min(stage, nn);
-		numRotations = min(numRotations, totalStages - stage + 1);
+		numRotations = min(numRotations,
+						   totalStages - stage + 1);
 		
+		// Find first row and column for rotations
 		int firstRow, firstCol;
 		firstRow = min(stage, rowsToRotate) - 1 + fRow;
-		firstCol = max(1, stage - (rowsToRotate - 1)) - 1 + fCol;
-		
-		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d\n",stage,numRotations,firstRow,firstCol);
+		firstCol = max(1, stage - (rowsToRotate - 1))
+				   - 1 + fCol;
 		
 		// number of rotations/work-groups
+		// Every single rotation is made in its own
+		// work-group
 		size_t localSize = K->sizeWorkgroup;
 		size_t globalSize = localSize * numRotations;
 		
@@ -63,48 +90,92 @@ void sFullRotations(sRlips *K, int rowsToRotate, int numColumns, int fRow, int f
 		
 		// Set up kernel arguments
 		int n = 0;
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstRow);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);					
+		// R matrix array
+		err1 =  clSetKernelArg (*K->fullRotKernel, 
+								n++, 
+								sizeof(cl_mem), 
+								&K->dRmat);
+		// Buffer array
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(cl_mem), 
+								 &K->dBufferMat);
+		// First row
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstRow);
+		// First column
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstCol);
+		// Number of columns in R matrix
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &K->numRmatCols);	
+								 
+		// Handle possible errors				
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", (int) err1);
 		}
-		
-		
-		//printf("GlobalSize: %d\n",globalSize);
 	
-		// Launch rotation kernel
-		err1 = clEnqueueNDRangeKernel(*K->commandqueue, *K->fullRotKernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+		// Launch full rotation kernel
+		err1 = clEnqueueNDRangeKernel(*K->commandqueue, 
+									  *K->fullRotKernel, 
+									  1, 
+									  NULL, 
+									  &globalSize, 
+									  &localSize, 
+									  0, 
+									  NULL, 
+									  NULL);
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel execution! Error code %d.\n", (int) err1);
 		}
-		//clFinish(A.commandqueue);
-	
-
 	}
-
+	
+	// Finish	
 	return;
 }
+///////////////////////////////////////////////////////////////
+// End of sFullRotations
+///////////////////////////////////////////////////////////////
 
 
-void cFullRotations(cRlips *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+/*
+cFullRotations
+=============
+
+Performs full rotations for between target
+and buffer matrices
+
+Complex version
+
+Arguments:
+
+	K				Complex RLIPS structure
+	rowsToRotate	Number of rows to be rotated
+	numColumns		Number of columns to be rotated
+	fRow			First row to be rotated
+	fCol			First column to be rotated
+*/
+void cFullRotations(cRlips *K, int rowsToRotate, int numColumns, 
+					int fRow, int fCol)
 {
 	// Calculate rotation parameters
 	// Stages
 	int totalStages = rowsToRotate + numColumns - 1;
-	
-	//printf("\tFull rotations, Total Stages: %d\n",totalStages);
-	
 
 	// Loop through stages
 	int stage;
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
+		// in this stage
 		int nn;
 		if (rowsToRotate > numColumns)
 		{
@@ -117,15 +188,18 @@ void cFullRotations(cRlips *K, int rowsToRotate, int numColumns, int fRow, int f
 		
 		int numRotations;
 		numRotations = min(stage, nn);
-		numRotations = min(numRotations, totalStages - stage + 1);
+		numRotations = min(numRotations, 
+						   totalStages - stage + 1);
 		
+		// Find first row and column for rotations
 		int firstRow, firstCol;
 		firstRow = min(stage, rowsToRotate) - 1 + fRow;
-		firstCol = max(1, stage - (rowsToRotate - 1)) - 1 + fCol;
-		
-		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d\n",stage,numRotations,firstRow,firstCol);
+		firstCol = max(1, stage - (rowsToRotate - 1)) 
+				   - 1 + fCol;
 		
 		// number of rotations/work-groups
+		// Every single rotation is made in its own
+		// work-group
 		size_t localSize = K->sizeWorkgroup;
 		size_t globalSize = localSize * numRotations;
 		
@@ -133,191 +207,343 @@ void cFullRotations(cRlips *K, int rowsToRotate, int numColumns, int fRow, int f
 		
 		// Set up kernel arguments
 		int n = 0;
-		err1 =  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat_r);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dRmat_i);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_r);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_i);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstRow);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->fullRotKernel, n++, sizeof(int), &K->numRmatCols);				
+		// R matrix real part
+		err1 =  clSetKernelArg (*K->fullRotKernel, 
+								n++, 
+								sizeof(cl_mem), 
+								&K->dRmat_r);
+		// R matrix imaginary part
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(cl_mem), 
+								 &K->dRmat_i);
+		// Rotation buffer real part
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(cl_mem), 
+								 &K->dBufferMat_r);
+		// Rotation buffer imaginary part
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(cl_mem), 
+								 &K->dBufferMat_i);
+		// First row
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstRow);
+		// First column						 
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstCol);
+		// Number of columns in R matrix						 
+		err1 |=  clSetKernelArg (*K->fullRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &K->numRmatCols);	
+		
+		//	Handle errors		
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", err1);
 		}
-		
-		
-		//printf("GlobalSize: %d\n",globalSize);
-	
-		// Launch rotation kernel
-		err1 = clEnqueueNDRangeKernel(*K->commandqueue, *K->fullRotKernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+
+		// Launch full rotation kernel
+		err1 = clEnqueueNDRangeKernel(*K->commandqueue, 
+									  *K->fullRotKernel, 
+									  1, 
+									  NULL, 
+									  &globalSize, 
+									  &localSize, 
+									  0, 
+									  NULL, 
+									  NULL);
+									  
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel execution! Error code %d.\n", err1);
 		}
-		//clEnqueueBarrier(*K->commandqueue);
-		clFinish(*K->commandqueue);
-
 	}
 
+	// Finish
 	return;
 }
+///////////////////////////////////////////////////////////////
+// End of cFullRotations
+///////////////////////////////////////////////////////////////
 
 
+/*
+sPartialRotations
+=============
 
-void sPartialRotations(sRlips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+Performs partial rotations for between target
+and buffer matrices
+
+Arguments:
+
+	K				Real RLIPS structure
+	rowsToRotate	Number of rows to be rotated
+	numColumns		Number of columns to be rotated
+	fRow			First row to be rotated
+	fCol			First column to be rotated
+*/
+
+void sPartialRotations(sRlips  *K, 
+					   int rowsToRotate, 
+					   int numColumns, 
+					   int fRow, 
+					   int fCol)
 {
 
 	int err1, n;
 	// Calculate rotation parameters
 	// Stages
 	int totalStages = 2 * rowsToRotate - 3;
-	
-	//printf("\tPartial rotations, Total Stages: %d\n",totalStages);
-	
 
 	// Loop through stages
 	int stage;
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
-		int numRotations = min( (stage+1) / 2, (2 * rowsToRotate - 1 - stage) / 2 );
-		int firstRow = min( stage + 1 , rowsToRotate ) - 1 + fRow;
-		int firstCol = max( stage - rowsToRotate + 2 , 1) - 1;
-		
-		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d fCol: %d\n",stage,numRotations,firstRow,firstCol,fCol);
-		
+		// for this stage
+		int numRotations = 
+			min((stage+1) / 2, 
+				(2 * rowsToRotate - 1 - stage) / 2 );
+				
+		// Find the first row and column for rotations		
+		int firstRow = 
+			min(stage + 1, rowsToRotate)
+			- 1 + fRow;
+		int firstCol = 
+			max(stage - rowsToRotate + 2 , 1)
+			- 1;
+
 		// number of rotations/work-groups
+		// Every single rotation is made in its own
+		// work-group
 		size_t localSize = K->sizeWorkgroup;
 		size_t globalSize = localSize * numRotations;
 		
 		// Set up kernel arguments
 		n = 0;
-		err1 =  clSetKernelArg (*K->partRotKernel, n++, sizeof(cl_mem), &K->dBufferMat);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &firstRow);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &K->numRmatCols);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &fCol);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);					
+		// Buffer matrix
+		err1 =  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(cl_mem), 
+								 &K->dBufferMat);
+		// First rotation row						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstRow);
+		// First rotation column						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstCol);
+		// Number of R matrix columns						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &K->numRmatCols);
+		// Column offset                                    						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++,
+								 sizeof(int), 
+								 &fCol);	
+				
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", err1);
 		}
 		
-		
-		//printf("GlobalSize: %d\n",globalSize);
-	
 		// Launch rotation kernel
-		err1 = clEnqueueNDRangeKernel(*K->commandqueue, *K->partRotKernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+		err1 = clEnqueueNDRangeKernel(*K->commandqueue, 
+									  *K->partRotKernel, 
+									  1, 
+									  NULL, 
+									  &globalSize, 
+									  &localSize, 
+									  0, 
+									  NULL, 
+									  NULL);
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in partial rotation kernel execution! Error code %d.\n", err1);
 		}
-		//clFinish(A.commandqueue);
-	
-
 	}
-	//clFinish(*K->commandqueue);
-
+	
 	// Rotations done. Move Rotated dBuffer in dRmat
-	//printf("\trowsInR before bufferCopy: %d\n",rowsInR);
+	// Calculate offset for copy
 	int dRmatOffset = K->numRmatRows * K->numRmatCols;
-	//printf("RmatOffset: %d\n",dRmatOffset);
-	//printf("\tElementsCopied: %d\n",rowsToRotate * nCols16);
-	//printf("rowsToRotate: %d\n",rowsToRotate);
-	err1 = clEnqueueCopyBuffer(*K->commandqueue,K->dBufferMat,K->dRmat,0,dRmatOffset * sizeof(float),sizeof(float) * rowsToRotate * K->numRmatCols,0,NULL,NULL);
+	
+	// Copy from one OpenCL buffer to another
+	err1 = clEnqueueCopyBuffer(*K->commandqueue,
+							   K->dBufferMat,
+							   K->dRmat,
+							   0,
+							   dRmatOffset * sizeof(float),
+							   sizeof(float) * rowsToRotate 
+							   		* K->numRmatCols,
+							   0,
+							   NULL,
+							   NULL);
 	if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in buffer copy! Error code %d.\n", err1);
 			exit(1);
 		}
-	//clFinish(*K->commandqueue);
-	
-	// Update variables
-	//rowsInR += rowsToRotate;
-	//rowsIndBuffer = 0;
-	
-				
 	
 	return;
 }
+///////////////////////////////////////////////////////////////
+// End of sPartialRotations
+///////////////////////////////////////////////////////////////
 
 
+/*
+cPartialRotations
+=============
 
-void cPartialRotations(cRlips  *K, int rowsToRotate, int numColumns, int fRow, int fCol)
+Performs partial rotations for between target
+and buffer matrices
+
+Complex version
+
+Arguments:
+
+	K				Complex RLIPS structure
+	rowsToRotate	Number of rows to be rotated
+	numColumns		Number of columns to be rotated
+	fRow			First row to be rotated
+	fCol			First column to be rotated
+*/
+
+void cPartialRotations(cRlips  *K, 
+					   int rowsToRotate, 
+					   int numColumns, 
+					   int fRow, 
+					   int fCol)
 {
 	int err1,n;
 	// Calculate rotation parameters
 	// Stages
 	int totalStages = 2 * rowsToRotate - 3;
-	
-	//printf("\tPartial rotations, Total Stages: %d\n",totalStages);
-	
 
 	// Loop through stages
 	int stage;
 	for (stage = 1; stage <= totalStages; stage++)
 	{
 		// Calculate number of rotations
-		int numRotations = min( (stage+1) / 2, (2 * rowsToRotate - 1 - stage) / 2 );
-		int firstRow = min( stage + 1 , rowsToRotate ) - 1 + fRow;
-		int firstCol = max( stage - rowsToRotate + 2 , 1) - 1;
-		
-		//printf("\t\tStage: %d numRot: %d firstRow: %d firstCol: %d fCol: %d\n",stage,numRotations,firstRow,firstCol,fCol);
-		
+		// for this stage
+		int numRotations = 
+			min((stage+1) / 2, 
+				(2 * rowsToRotate - 1 - stage) / 2 );
+				
+		// Find the first row and column for rotations	 		
+		int firstRow = 
+			min(stage + 1, 
+				rowsToRotate) 
+				- 1 + fRow;
+		int firstCol = 
+			max(stage - rowsToRotate + 2 , 1) 
+			- 1;
+
 		// number of rotations/work-groups
+		// Every single rotation is made in its own
+		// work-group
 		size_t localSize = K->sizeWorkgroup;
 		size_t globalSize = localSize * numRotations;
 		
 		// Set up kernel arguments
 		n = 0;
-		err1 =  clSetKernelArg (*K->partRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_r);
-		err1 =  clSetKernelArg (*K->partRotKernel, n++, sizeof(cl_mem), &K->dBufferMat_i);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &firstRow);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &firstCol);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &K->numRmatCols);
-		err1 |=  clSetKernelArg (*K->partRotKernel, n++, sizeof(int), &fCol);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);	
-		//err1 |=  clSetKernelArg (partialRotKernel, n++, sizeof(cl_float) * localSize, NULL);					
+		// Real paert of buffer matrix
+		err1 =  clSetKernelArg (*K->partRotKernel, 
+								n++, 
+								sizeof(cl_mem), 
+								&K->dBufferMat_r);
+		// Imaginary part of buffer matrix						
+		err1 =  clSetKernelArg (*K->partRotKernel, 
+								n++, 
+								sizeof(cl_mem), 
+								&K->dBufferMat_i);
+		// First rotation row						
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstRow);
+		// First rotation column						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &firstCol);
+		// Number of columns in R matrix						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &K->numRmatCols);
+		// Column offset						 
+		err1 |=  clSetKernelArg (*K->partRotKernel, 
+								 n++, 
+								 sizeof(int), 
+								 &fCol);	
+					
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in kernel arguments! Error code %d.\n", err1);
 		}
-		
-		
-		//printf("GlobalSize: %d\n",globalSize);
-	
+
 		// Launch rotation kernel
-		err1 = clEnqueueNDRangeKernel(*K->commandqueue, *K->partRotKernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+		err1 = clEnqueueNDRangeKernel(*K->commandqueue, 
+									  *K->partRotKernel, 
+									  1, 
+									  NULL, 
+									  &globalSize, 
+									  &localSize, 
+									  0, 
+									  NULL, 
+									  NULL);
+									  
 		if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in partial rotation kernel execution! Error code %d.\n", err1);
 		}
-		//clFinish(*K->commandqueue);
-	
-
 	}
-	//clFinish(*K->commandqueue);
-	clEnqueueBarrier(*K->commandqueue);
-
+	
 	// Rotations done. Move Rotated dBuffer in dRmat
-	//printf("\trowsInR before bufferCopy: %d\n",rowsInR);
+	// Calculate offset for copy
 	int dRmatOffset = K->numRmatRows * K->numRmatCols;
-	//printf("\tRmatOffset: %d\n",dRmatOffset);
-	//printf("\tElementsCopied: %d\n",rowsToRotate * K->numRmatCols);
-	err1  = clEnqueueCopyBuffer(*K->commandqueue,K->dBufferMat_r,K->dRmat_r,0,dRmatOffset * sizeof(float),sizeof(float) * rowsToRotate * K->numRmatCols,0,NULL,NULL);
-	//clEnqueueBarrier(*K->commandqueue);
-	err1 |= clEnqueueCopyBuffer(*K->commandqueue,K->dBufferMat_i,K->dRmat_i,0,dRmatOffset * sizeof(float),sizeof(float) * rowsToRotate * K->numRmatCols,0,NULL,NULL);
+
+	// Copy both real and imaginary parts of the buffer 
+	// into R matrix buffers
+	err1  = clEnqueueCopyBuffer(*K->commandqueue,
+								K->dBufferMat_r,
+								K->dRmat_r,
+								0,
+								dRmatOffset * sizeof(float),
+								sizeof(float) * rowsToRotate 
+									* K->numRmatCols,
+								0,
+								NULL,
+								NULL);
+	err1 |= clEnqueueCopyBuffer(*K->commandqueue,
+								K->dBufferMat_i,
+								K->dRmat_i,
+								0,
+								dRmatOffset * sizeof(float),
+								sizeof(float) * rowsToRotate 
+									* K->numRmatCols,
+								0,
+								NULL,
+								NULL);
 	if ( err1 != CL_SUCCESS)
 		{
 			printf("Error in buffer copy! Error code %d.\n", err1);
 		}
-	//clFinish(*K->commandqueue);
-	//clEnqueueBarrier(*K->commandqueue);
-	// Update variables
-	//rowsInR += rowsToRotate;
-	//rowsIndBuffer = 0;
-	
-	
 	return;
 }
+///////////////////////////////////////////////////////////////
+// End of cPartialRotations
+///////////////////////////////////////////////////////////////

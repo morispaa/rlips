@@ -43,7 +43,8 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 	# If given as a vector check that its length is 
 	# a multiple of e$ncols 	
 	{
-		if (length(A.data)/e$ncols != as.integer(length(A.data)/e$ncols))
+		if (length(A.data)/e$ncols 
+			!= as.integer(length(A.data)/e$ncols))
 		{
 			stop('rlips.add: theory matrix has wrong size!')
 		}
@@ -54,7 +55,7 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		}
 		
 		# Reshape vector into a matrix
-		A.data <- matrix(A.data,e$ncols,num.rows,byrow=T)
+		A.data <- matrix(A.data,ncol=e$ncols,nrow=num.rows,byrow=T)
 	}	
 	else
 	# Theory matrix data given as a matrix. Check 
@@ -85,7 +86,11 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 			# reshape as matrix
 			if (e$nrhs>1)
 			{
-				M.data <- matrix(M.data,e$nrhs,num.rows,by.row=T)
+				M.data <- matrix(
+						  M.data,
+						  ncol=e$nrhs,
+						  nrows=num.rows,
+						  byrow=T)
 			}
 			else
 			{
@@ -146,8 +151,19 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 		# Divide both theory matrix rows and measurements 
 		# by the square root of the inverse of the variance 
 		# (whitening the noise)
-		A.data <- diag(1/sqrt(E.data)) %*% A.data
-		M.data <- diag(1/sqrt(E.data)) %*% M.data
+		 if(num.rows>1){
+                 A.data <- apply(A.data,
+                 				 FUN=function(x,y){return(x/y)},
+                 				 y=sqrt(E.data),
+                 				 MARGIN=2)
+                 M.data <- apply(M.data,
+                 				 FUN=function(x,y){return(x/y)},
+                 				 y=sqrt(E.data),
+                 				 MARGIN=2)
+               }else{
+                 A.data <- A.data / sqrt(E.data)
+                 M.data <- M.data / sqrt(E.data)
+               }
 	}
   
 	# Move data to buffer row by row

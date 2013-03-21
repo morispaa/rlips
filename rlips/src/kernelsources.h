@@ -1,10 +1,10 @@
-//file: kernelsources.h
+/* file: kernelsources.h */
 
-// OpenCL-LIPS compute kernel source codes
+/* OpenCL-LIPS compute kernel source codes
 
-// (c) 2011- University of Oulu, Finland
-// Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
-// Licensed under FreeBSD license. See file LICENSE for details.
+   (c) 2011- University of Oulu, Finland
+   Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
+   Licensed under FreeBSD license. See file LICENSE for details. */
 
 
 #ifndef __KERNELSOURCES_H

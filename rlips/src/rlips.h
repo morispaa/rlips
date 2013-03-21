@@ -1,4 +1,4 @@
-//file: rlips.h
+// file: rlips.h
 
 // RLIPS C data types, structs, function prototypes
 
@@ -19,7 +19,7 @@
 #endif
 
 // *************************************
-// ***   Rlips structures          ***
+// ***   Rlips structures            ***
 // *************************************
 
 
@@ -38,18 +38,23 @@ typedef struct _sRlips
 {	
 	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
-	int numRHS;  // Number of right hand sides, i.e. number of columns in the measurement
+	int numRHS;  // Number of right hand sides, 
+	             // i.e. number of columns in the measurement
 	int sizeBuffer;  // Number of rows in the rotation buffer
-	int sizeWorkgroup; // OpenCL workgroup size (should be of form 2^n)
+	int sizeWorkgroup; // OpenCL workgroup size 
+	                   //(should be of form 2^n)
 	
 
 	// Internal parameters
-	float zThreshold; // Threshold value for zero. This could also be user given parameter,
-					  // but is not at the moment.
-	int numTotRows; // Total number of data rows fed into problem
-	int numRmatRows; // Number of rows currently in the target matrix
-	int numBufferRows; // Number of data rows currently in the rotation buffer
-	long flops; // Number of floating point operations made	(NOT USED)	
+	float zThreshold; // Threshold value for zero. 
+	int numTotRows; // Total number of data rows 
+	                // fed into problem
+	int numRmatRows; // Number of rows currently 
+	                 // in the target matrix
+	int numBufferRows; // Number of data rows currently 
+	                   // in the rotation buffer
+	long flops; // Number of floating point 
+	            // operations made (NOT USED)	
 	
 	// Constant parameters depending on user given parameters
 	int numRmatCols; // number of columns in the R matrix
@@ -60,7 +65,7 @@ typedef struct _sRlips
 	cl_mem dRmat; // OpenCL buffer for R matrix
 	cl_mem dBufferMat; // OpenCL buffer for buffer matrix
 	
-	// OpenCL stuff
+	// OpenCL structures 
 	cl_platform_id* platform_id;
 	cl_device_id* device_id;
 	cl_context* context;
@@ -72,23 +77,27 @@ typedef struct _sRlips
 } sRlips;
 
 
+
+// Single precision complex
 typedef struct _cRlips
 {	
 	// User given parameters (in rlips.init)
 	int numCols; // Number of columns/unknowns
-	int numRHS;  // Number of right hand sides, i.e. number of columns in the measurement
+	int numRHS;  // Number of right hand sides, 
+	             // i.e. number of columns in the measurement
 	int sizeBuffer;  // Number of rows in the rotation buffer
-	int sizeWorkgroup; // OpenCL workgroup size (should be of form 2^n)
-	
-
+	int sizeWorkgroup; // OpenCL workgroup size
+	                   // (should be of form 2^n)
 	
 	// Internal parameters
-	float zThreshold; // Threshold value for zero. This could also be user given parameter,
-					  // but is not at the moment.
+	float zThreshold; // Threshold value for zero. 
 	int numTotRows; // Number of data rows fed into problem
-	int numRmatRows; // Number of rows currently in the target matrix
-	int numBufferRows; // Number of data rows currently in the rotation buffer
-	long flops; // Number of floating point operations made	(NOT USED)
+	int numRmatRows; // Number of rows currently in
+	                 // the target matrix
+	int numBufferRows; // Number of data rows currently in
+	                   // the rotation buffer
+	long flops; // Number of floating point operations made
+	            // (NOT USED)
 		
 	// Constant parameters depending on user given parameters
 	int numRmatCols; // number of columns in the R matrix
@@ -98,10 +107,12 @@ typedef struct _cRlips
 	// Device buffers
 	cl_mem dRmat_r; // OpenCL buffer for R matrix (real part)
 	cl_mem dRmat_i; // OpenCL buffer for R matrix (imag part)	
-	cl_mem dBufferMat_r; // OpenCL buffer for buffer matrix (real part)
-	cl_mem dBufferMat_i; // OpenCL buffer for buffer matrix (imag part)
+	cl_mem dBufferMat_r; // OpenCL buffer for buffer matrix
+	                     // (real part)
+	cl_mem dBufferMat_i; // OpenCL buffer for buffer matrix
+	                     // (imag part)
 	
-	// OpenCL stuff
+	// OpenCL structures
 	cl_platform_id* platform_id;
 	cl_device_id* device_id;
 	cl_context* context;
@@ -118,7 +129,7 @@ typedef struct _cRlips
 
 
 // ***************************************
-// ***   Rlips function prototypes   ***
+// ***   Rlips function prototypes     ***
 // ***************************************
 SEXP sInitRlips( SEXP, SEXP, SEXP, SEXP);
 SEXP sKillRlips(SEXP);

@@ -28,21 +28,21 @@ rlips.rotate <- function(e)
 		if (e$type == 's')
 		{
 			.Call("sRotateRlips",
-				e$ref,
-				t(e$buffer[1:e$brows,]),
-				e$brows,
-				PACKAGE="rlips")
+				  e$ref,
+				  t(e$buffer[1:e$brows,]),
+				  e$brows,
+				  PACKAGE="rlips")
 		}
 		else if (e$type == 'c')
 		{
 			.Call("cRotateRlips",
-				e$ref,
-				# Complex data is separated into real and
-				# imaginary parts
-				Re(t(e$buffer[1:e$brows,])),
-				Im(t(e$buffer[1:e$brows,])),
-				e$brows,
-				PACKAGE="rlips")
+				  e$ref,
+				  # Complex data is separated into real and
+				  # imaginary parts
+				  Re(t(e$buffer[1:e$brows,])),
+				  Im(t(e$buffer[1:e$brows,])),
+				  e$brows,
+				  PACKAGE="rlips")
 		}
 		
 		# After rotations, update internal variables and 
