@@ -6,4 +6,5 @@ export(rlips.init,
 	   rlips.rotate,
 	   rlips.solve,
 	   rlips.get.data,
-	   rlips.test)
+	   rlips.test,
+	   rlips.copy)

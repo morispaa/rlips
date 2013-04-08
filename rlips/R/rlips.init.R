@@ -14,6 +14,10 @@
 ##	workgroup.size
 ##				OpenCL workgroup size, best choice depends 
 ##				on the used GPU
+##
+## Returns:
+##  e			Initialized RLIPS environment
+
 rlips.init <- function(ncols,nrhs,type='s',
 					   nbuf=ncols,workgroup.size=128) 
 {
