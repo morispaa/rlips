@@ -89,7 +89,7 @@ rlips.add <- function(e,A.data,M.data,E.data=1)
 				M.data <- matrix(
 						  M.data,
 						  ncol=e$nrhs,
-						  nrows=num.rows,
+						  nrow=num.rows,
 						  byrow=T)
 			}
 			else

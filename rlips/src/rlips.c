@@ -149,39 +149,39 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 	error = clGetPlatformIDs(1,K->platform_id,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not get OpenCL platform! Error code %d. Exiting sInitRlips.\n", 
+		Rprintf("Did not get OpenCL platform! Error code %d. Exiting sInitRlips.\n", 
 				error);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Ask for one GPU
 	error = clGetDeviceIDs(*K->platform_id,CL_DEVICE_TYPE_GPU,1,K->device_id,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not get OpenCL device! Error code %d. Exiting sInitRlips.\n", 
+		Rprintf("Did not get OpenCL device! Error code %d. Exiting sInitRlips.\n", 
 				error);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create OpenCL context
 	*K->context = clCreateContext(0,1,K->device_id,NULL,NULL,&error);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not create OpenCL context! Error code %d. Exiting sInitRlips.\n", 
+		Rprintf("Did not create OpenCL context! Error code %d. Exiting sInitRlips.\n", 
 				error);
 		if (*K->context) clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create OpenCL command queue
 	*K->commandqueue = clCreateCommandQueue(*K->context,*K->device_id,0,&error);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not create OpenCL command queue! Error code %d. Exiting sInitRlips.\n", 
+		Rprintf("Did not create OpenCL command queue! Error code %d. Exiting sInitRlips.\n", 
 				error);
 		if (*K->commandqueue) clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create kernel program (KernelSource in kernelsources.h)
@@ -195,12 +195,12 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 						 
 	if (!*K->kernel_program)
 	{
-		printf("Could not create compute program! Exiting sInitRlips.\n");
+		Rprintf("Could not create compute program! Exiting sInitRlips.\n");
 		if (*K->commandqueue) 
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Build kernel executable
@@ -210,11 +210,11 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 	// If there were errors, 
 	// print info
 	{
-		printf("Error code: %d\n",error);
+		Rprintf("Error code: %d\n",error);
 		size_t len;
 		char buffer[2048];
 		
-		printf("Failed to build program executable! Exiting sInitRlips.\n");
+		Rprintf("Failed to build program executable! Exiting sInitRlips.\n");
 		
 		clGetProgramBuildInfo(*K->kernel_program,
 							  *K->device_id,
@@ -223,7 +223,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 							  buffer,
 							  &len);
 		
-		printf("%s\n",buffer);
+		Rprintf("%s\n",buffer);
 		
 		if (*K->kernel_program) 
 			clReleaseProgram(*K->kernel_program);
@@ -231,7 +231,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create the kernel functions
@@ -245,7 +245,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 				   
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
-		printf("Could not create kernel! Error codes: %d, %d. Exiting sInitRlips.\n",
+		Rprintf("Could not create kernel! Error codes: %d, %d. Exiting sInitRlips.\n",
 				error,error2);
 		if(*K->fullRotKernel) 
 			clReleaseKernel(*K->fullRotKernel);
@@ -257,7 +257,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);		
+		return R_NilValue;		
 	}	
 		
 	// Create OpenCL buffer for target matrix
@@ -267,7 +267,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
-		printf("Could not create OpenCL data buffers! Exiting sInitRlips.\n");
+		Rprintf("Could not create OpenCL data buffers! Exiting sInitRlips.\n");
 		if(*K->fullRotKernel) 
 			clReleaseKernel(*K->fullRotKernel);
 		if(*K->partRotKernel) 
@@ -278,7 +278,7 @@ SEXP sInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);		
+		return R_NilValue;		
 	}	
 		
 	// Construct address and return it
@@ -390,7 +390,7 @@ SEXP sRotateRlips(SEXP REF, SEXP DOUBLE_DATABUFFER,
 	// any situation.)
 	if (bufferRows > K->sizeBuffer)
 	{
-		printf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,bufferRows);
+		Rprintf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,bufferRows);
 		return R_NilValue;
 	}
 	
@@ -653,7 +653,7 @@ SEXP sGetDataRlips(SEXP REF)
 				dataBuffer,0,NULL,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Could not read buffer from device!\n");
+		Rprintf("Could not read buffer from device!\n");
 		return R_NilValue;
 	}
 	
@@ -765,8 +765,8 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 	error = clGetPlatformIDs(1,K->platform_id,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not get OpenCL platform! Error code %d. Exiting sInitRlips.\n", error);
-		exit(1);
+		Rprintf("Did not get OpenCL platform! Error code %d. Exiting sInitRlips.\n", error);
+		return R_NilValue;
 	}
 	
 	// Ask for one GPU
@@ -774,8 +774,8 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 						   1,K->device_id,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not get OpenCL device! Error code %d. Exiting sInitRlips.\n", error);
-		exit(1);
+		Rprintf("Did not get OpenCL device! Error code %d. Exiting sInitRlips.\n", error);
+		return R_NilValue;
 	}
 	
 	// Create OpenCL context
@@ -783,9 +783,9 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 								  &error);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not create OpenCL context! Error code %d. Exiting sInitRlips.\n", error);
+		Rprintf("Did not create OpenCL context! Error code %d. Exiting sInitRlips.\n", error);
 		if (*K->context) clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create command queue
@@ -794,12 +794,12 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 							   0,&error);
 	if (error != CL_SUCCESS)
 	{
-		printf("Did not create OpenCL command queue! Error code %d. Exiting sInitRlips.\n", error);
+		Rprintf("Did not create OpenCL command queue! Error code %d. Exiting sInitRlips.\n", error);
 		if (*K->commandqueue) 
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create kernel program (KernelSource in Rlips.h)
@@ -808,12 +808,12 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 					(const char **)&cKernelSource,NULL,&error);
 	if (!*K->kernel_program)
 	{
-		printf("Could not create compute program! Exiting sInitRlips.\n");
+		Rprintf("Could not create compute program! Exiting sInitRlips.\n");
 		if (*K->commandqueue) 
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Build kernel executable
@@ -821,11 +821,11 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 						   NULL,"-w",NULL,NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Error code: %d\n",error);
+		Rprintf("Error code: %d\n",error);
 		size_t len;
 		char buffer[1024*100];
 		
-		printf("Failed to build program executable! Exiting sInitRlips.\n");
+		Rprintf("Failed to build program executable! Exiting sInitRlips.\n");
 		
 		clGetProgramBuildInfo(*K->kernel_program,
 							  *K->device_id,
@@ -834,7 +834,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 							  buffer,
 							  &len);
 		
-		printf("Log length: %d\n%s\n",(int) len,buffer);
+		Rprintf("Log length: %d\n%s\n",(int) len,buffer);
 		
 		if (*K->kernel_program) 
 			clReleaseProgram(*K->kernel_program);
@@ -842,7 +842,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);
+		return R_NilValue;
 	}
 	
 	// Create the kernel functions
@@ -855,7 +855,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 						 "c_partial_rotations",&error2);
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
-		printf("Could not create kernel! Error codes: %d, %d. Exiting sInitRlips.\n",error,error2);
+		Rprintf("Could not create kernel! Error codes: %d, %d. Exiting sInitRlips.\n",error,error2);
 		if(*K->fullRotKernel) 
 			clReleaseKernel(*K->fullRotKernel);
 		if(*K->partRotKernel) 
@@ -866,7 +866,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) 
 			clReleaseContext(*K->context);
-		exit(1);		
+		return R_NilValue;		
 	}	
 	
 	// Create OpenCL buffers
@@ -880,7 +880,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 						 NULL,&error2);	
 	if (error != CL_SUCCESS || error2 != CL_SUCCESS)
 	{
-		printf("Could not create OpenCL data buffers! Error codes: %d, %d. Exiting sInitRlips.\n",error,error2);
+		Rprintf("Could not create OpenCL data buffers! Error codes: %d, %d. Exiting sInitRlips.\n",error,error2);
 		if(*K->fullRotKernel) 
 			clReleaseKernel(*K->fullRotKernel);
 		if(*K->partRotKernel) 
@@ -890,7 +890,7 @@ SEXP cInitRlips(SEXP NCOLS, SEXP NRHS, SEXP NBUF,
 		if (*K->commandqueue) 
 			clReleaseCommandQueue(*K->commandqueue);
 		if (*K->context) clReleaseContext(*K->context);
-		exit(1);		
+		return R_NilValue;		
 	}	
 	
 	// Construct address and return
@@ -1005,7 +1005,7 @@ SEXP cRotateRlips(SEXP REF, SEXP DOUBLE_DATABUFFER_R,
 	// the device buffer size
 	if (bufferRows > K->sizeBuffer)
 	{
-		printf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,bufferRows);
+		Rprintf("Too many data rows to rotate! Buffer has %d rows. You tried to rotate %d rows.\nRotations not done!\n",K->sizeBuffer,bufferRows);
 		return R_NilValue;
 	}
 	
@@ -1234,6 +1234,7 @@ SEXP cRotateRlips(SEXP REF, SEXP DOUBLE_DATABUFFER_R,
 		// Return nothing to R
 		return R_NilValue;		
 	}
+    return R_NilValue;
 }
 ///////////////////////////////////////////////////////////////
 // End of cRotateRlips
@@ -1300,7 +1301,7 @@ SEXP cGetDataRlips(SEXP REF)
 								NULL);
 	if (error != CL_SUCCESS)
 	{
-		printf("Could not read buffer from device!\n");
+		Rprintf("Could not read buffer from device!\n");
 
 		return R_NilValue;
 	}

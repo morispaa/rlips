@@ -1,12 +1,11 @@
 Package: rlips
-Version: 0.5-3
+Version: 0.5-4
 Date: 2013-03-21
 Title: R Linear Inverse Problem Solver
-Author@R: c(person("Mikko","Orispää",email="mikko.orispaa@oulu.fi"))
-Author: Mikko Orispää <mikko.orispaa@oulu.fi>
-Maintainer: Mikko Orispää <mikko.orispaa@oulu.fi>
+Author@R: c(person("Mikko","Orispaa",email="mikko.orispaa@oulu.fi"))
+Author: Mikko Orispaa <mikko.orispaa@oulu.fi>
+Maintainer: Mikko Orispaa <mikko.orispaa@oulu.fi>
 Depends: R (>= 2.10.0)
 Description: Solver for large (overdetermined) linear statistical inverse problems. Uses GPU's and OpenCL to increase performance.
 License: FreeBSD
 Copyright: University of Oulu, Finland
-Encoding: UTF-8

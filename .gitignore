@@ -6,4 +6,4 @@
 .Rhistory
 *.tar.gz
 *.rds
-
+rlips.Rcheck/

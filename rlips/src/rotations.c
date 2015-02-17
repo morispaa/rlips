@@ -7,6 +7,10 @@
 // Written by Mikko Orispaa <mikko.orispaa@oulu.fi>
 // Licensed under FreeBSD license. See file LICENSE for details.
 
+
+#include<R.h>
+#include<Rinternals.h>
+
 #include "rotations.h"
 #include<stdio.h>
 
@@ -119,7 +123,7 @@ void sFullRotations(sRlips *K, int rowsToRotate, int numColumns,
 		// Handle possible errors				
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel arguments! Error code %d.\n", (int) err1);
+			Rprintf("Error in kernel arguments! Error code %d.\n", (int) err1);
 		}
 	
 		// Launch full rotation kernel
@@ -134,7 +138,7 @@ void sFullRotations(sRlips *K, int rowsToRotate, int numColumns,
 									  NULL);
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel execution! Error code %d.\n", (int) err1);
+			Rprintf("Error in kernel execution! Error code %d.\n", (int) err1);
 		}
 	}
 	
@@ -246,7 +250,7 @@ void cFullRotations(cRlips *K, int rowsToRotate, int numColumns,
 		//	Handle errors		
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel arguments! Error code %d.\n", err1);
+			Rprintf("Error in kernel arguments! Error code %d.\n", err1);
 		}
 
 		// Launch full rotation kernel
@@ -262,7 +266,7 @@ void cFullRotations(cRlips *K, int rowsToRotate, int numColumns,
 									  
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel execution! Error code %d.\n", err1);
+			Rprintf("Error in kernel execution! Error code %d.\n", err1);
 		}
 	}
 
@@ -356,7 +360,7 @@ void sPartialRotations(sRlips  *K,
 				
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel arguments! Error code %d.\n", err1);
+			Rprintf("Error in kernel arguments! Error code %d.\n", err1);
 		}
 		
 		// Launch rotation kernel
@@ -371,7 +375,7 @@ void sPartialRotations(sRlips  *K,
 									  NULL);
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in partial rotation kernel execution! Error code %d.\n", err1);
+			Rprintf("Error in partial rotation kernel execution! Error code %d.\n", err1);
 		}
 	}
 	
@@ -392,8 +396,8 @@ void sPartialRotations(sRlips  *K,
 							   NULL);
 	if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in buffer copy! Error code %d.\n", err1);
-			exit(1);
+			Rprintf("Error in buffer copy! Error code %d.\n", err1);
+			return;
 		}
 	
 	return;
@@ -492,7 +496,7 @@ void cPartialRotations(cRlips  *K,
 					
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in kernel arguments! Error code %d.\n", err1);
+			Rprintf("Error in kernel arguments! Error code %d.\n", err1);
 		}
 
 		// Launch rotation kernel
@@ -508,7 +512,7 @@ void cPartialRotations(cRlips  *K,
 									  
 		if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in partial rotation kernel execution! Error code %d.\n", err1);
+			Rprintf("Error in partial rotation kernel execution! Error code %d.\n", err1);
 		}
 	}
 	
@@ -540,7 +544,7 @@ void cPartialRotations(cRlips  *K,
 								NULL);
 	if ( err1 != CL_SUCCESS)
 		{
-			printf("Error in buffer copy! Error code %d.\n", err1);
+			Rprintf("Error in buffer copy! Error code %d.\n", err1);
 		}
 	return;
 }
